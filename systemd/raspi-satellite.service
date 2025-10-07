@@ -1,0 +1,16 @@
+[Unit]
+Description=Raspberry Pi Satellite (Wyoming STT + Piper)
+After=network-online.target sound.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/raspi-satellite-1
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/pi/raspi-satellite-1/.venv/bin/python /home/pi/raspi-satellite-1/src/main.py --config /home/pi/raspi-satellite-1/config.yaml
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

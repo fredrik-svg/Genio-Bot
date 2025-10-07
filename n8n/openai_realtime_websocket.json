@@ -1,0 +1,116 @@
+{
+  "name": "OpenAI Realtime (WebSocket)",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "realtime-input",
+        "options": {
+          "responseMode": "lastNode",
+          "responseData": "allEntries"
+        }
+      },
+      "id": "WebhookRealtime",
+      "name": "HTTP Webhook (Realtime In)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        280,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "Tar emot {device, text} från satelliten för OpenAI Realtime."
+    },
+    {
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "requestMethod": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "jsonParameters": true,
+        "options": {
+          "timeout": 30000
+        },
+        "sendBody": true,
+        "bodyParametersJson": "{\"model\": \"gpt-4o-mini\", \"messages\": [{\"role\": \"system\", \"content\": \"Du \\u00e4r en svensk r\\u00f6stassistent.\"}, {\"role\": \"user\", \"content\": \"{{$json[\\\"text\\\"]}}\"}]}"
+      },
+      "id": "HTTPRequestOpenAI",
+      "name": "HTTP Request → OpenAI Realtime",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        560,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "Använder OpenAI credentials lagrad i n8n."
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extrahera svaret från OpenAI-responsen\nconst data = items[0].json;\nlet reply = data.choices?.[0]?.message?.content || data.reply || \"Jag är inte säker.\";\nreturn [{ json: { reply } }];"
+      },
+      "id": "FormatReplyRealtime",
+      "name": "Function: Format Reply",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        820,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "responseBody": "={{$json}}",
+        "responseCode": 200
+      },
+      "id": "ReturnRealtime",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "Returnerar { reply } till satelliten."
+    }
+  ],
+  "connections": {
+    "HTTP Webhook (Realtime In)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request → OpenAI Realtime",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request → OpenAI Realtime": {
+      "main": [
+        [
+          {
+            "node": "Function: Format Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function: Format Reply": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "timezone": "Europe/Stockholm"
+  }
+}

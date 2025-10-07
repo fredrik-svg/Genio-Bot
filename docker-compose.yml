@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  satellite:
+    build: .
+    devices:
+      - "/dev/snd:/dev/snd"
+    volumes:
+      - ./:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: ["python", "src/main.py", "--config", "config.yaml"]

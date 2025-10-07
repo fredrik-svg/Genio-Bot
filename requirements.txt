@@ -1,0 +1,8 @@
+PyYAML
+sounddevice
+webrtcvad-wheels
+numpy
+soundfile
+requests
+# Wyoming-protokollklient (PyPI)
+wyoming

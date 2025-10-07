@@ -1,0 +1,123 @@
+{
+  "meta": {
+    "version": "v1",
+    "instanceId": "placeholder-instance"
+  },
+  "tags": [],
+  "nodes": [
+    {
+      "parameters": {
+        "path": "wyoming-input",
+        "options": {
+          "responseMode": "lastNode",
+          "responseData": "allEntries",
+          "responseCode": 200,
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "id": "WebhookTrigger",
+      "name": "HTTP Webhook (Wyoming In)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.2,
+      "position": [
+        280,
+        300
+      ],
+      "webhookId": "wyoming-input",
+      "notesInFlow": true,
+      "notes": "Tar emot JSON: { device, text } från satelliten."
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "requestMethod": "POST",
+        "url": "https://your-llm-server.example.com/api/generate",
+        "jsonParameters": true,
+        "options": {
+          "timeout": 30000
+        },
+        "sendBody": true,
+        "bodyParametersJson": "{\"model\": \"llama-3.1-8b\", \"stream\": false, \"prompt\": \"Svara kort och hj\\u00e4lpsamt p\\u00e5 svenska: {{$json[\\\"text\\\"]}}\"}"
+      },
+      "id": "HTTPtoLLM",
+      "name": "HTTP Request → LLM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        560,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "Byt URL till din vLLM/OpenAI-proxy. Returnerar JSON med fält t.ex. { reply } eller { text }."
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extrahera textsvar från valfri LLM-respons\nconst d = items[0].json || {};\nlet reply = d.reply || d.text || d.choices?.[0]?.message?.content || d.choices?.[0]?.text || \"Jag är osäker, kan du omformulera?\";\nreturn [{ json: { reply } }];"
+      },
+      "id": "FormatReply",
+      "name": "Function: Format Reply",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        840,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "responseBody": "={{$json}}",
+        "responseCode": 200
+      },
+      "id": "ReturnWebhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "Returnerar { reply } till satelliten."
+    }
+  ],
+  "connections": {
+    "HTTP Webhook (Wyoming In)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request → LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request → LLM": {
+      "main": [
+        [
+          {
+            "node": "Function: Format Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function: Format Reply": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "timezone": "Europe/Stockholm"
+  },
+  "name": "Wyoming Satellite -> LLM -> TTS (reply)"
+}

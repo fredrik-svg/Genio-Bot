@@ -1,0 +1,87 @@
+{
+  "name": "Home Assistant MQTT Command",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "home-automation",
+        "options": {
+          "responseMode": "lastNode",
+          "responseData": "allEntries"
+        }
+      },
+      "id": "WebhookHA",
+      "name": "HTTP Webhook (Home Automation)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        280,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "Tar emot {device, text, intent} från satelliten."
+    },
+    {
+      "parameters": {
+        "broker": "mqtt://homeassistant.local",
+        "topic": "home/lights/kitchen/set",
+        "message": "on",
+        "qos": 0,
+        "retain": false
+      },
+      "id": "MQTTCommand",
+      "name": "MQTT Publish (light on)",
+      "type": "n8n-nodes-base.mqtt",
+      "typeVersion": 2,
+      "position": [
+        580,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "Snabb MQTT-styrning för t.ex. lampor i Home Assistant."
+    },
+    {
+      "parameters": {
+        "responseBody": "{\"reply\":\"Lampan är tänd.\"}",
+        "responseCode": 200
+      },
+      "id": "ReturnHA",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        880,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "Svarar till satelliten efter lyckad MQTT-publicering."
+    }
+  ],
+  "connections": {
+    "HTTP Webhook (Home Automation)": {
+      "main": [
+        [
+          {
+            "node": "MQTT Publish (light on)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MQTT Publish (light on)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "timezone": "Europe/Stockholm"
+  }
+}
