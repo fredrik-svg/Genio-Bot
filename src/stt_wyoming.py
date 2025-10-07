@@ -1,13 +1,10 @@
-import io
 import asyncio
-import numpy as np
-import soundfile as sf
 
 # Wyoming-klientbibliotek (PyPI: wyoming)
 # Docs/APIs kan variera med version; denna implementering förutsätter grundläggande Transcribe/Transcript-ramar.
-from wyoming.client import Client
-from wyoming.speech import Transcribe, Transcript
-from wyoming.audio import AudioChunk
+from wyoming.client import AsyncTcpClient
+from wyoming.asr import Transcribe, Transcript
+from wyoming.audio import AudioChunk, AudioStart, AudioStop
 
 class WyomingSTT:
     def __init__(self, host: str = "127.0.0.1", port: int = 10300, language: str = "sv"):
@@ -16,33 +13,36 @@ class WyomingSTT:
         self.language = language
 
     async def _transcribe_async(self, pcm_bytes: bytes, sample_rate=16000):
-        # Konvertera PCM16 till WAV-bytes (mono, 16kHz)
-        pcm = np.frombuffer(pcm_bytes, dtype=np.int16).astype(np.float32) / 32768.0
-        buf = io.BytesIO()
-        sf.write(buf, pcm, sample_rate, format="WAV")
-        buf.seek(0)
-        wav_bytes = buf.read()
-
-        client = await Client.connect(self.host, self.port)
+        # PCM16 bytes (mono, 16kHz) - no conversion needed, Wyoming expects raw PCM
+        
+        client = AsyncTcpClient(self.host, self.port)
+        await client.connect()
         try:
             # Begär transkribering (språk-hint kan ignoreras av vissa servrar)
-            await client.write(Transcribe(language=self.language))
+            await client.write_event(Transcribe(language=self.language).event())
 
-            # Skicka hela yttrandet som en enda ljudchunk (WAV)
-            await client.write(AudioChunk(wav_bytes))
+            # Skicka AudioStart event
+            await client.write_event(AudioStart(rate=sample_rate, width=2, channels=1).event())
+
+            # Skicka hela yttrandet som en enda ljudchunk (raw PCM16)
+            await client.write_event(AudioChunk(rate=sample_rate, width=2, channels=1, audio=pcm_bytes).event())
+
+            # Skicka AudioStop event
+            await client.write_event(AudioStop().event())
 
             # Vänta på Transcript
             text = ""
             while True:
-                msg = await client.read()
+                msg = await client.read_event()
                 if msg is None:
                     break
-                if isinstance(msg, Transcript):
-                    text = (msg.text or "").strip()
+                if msg.type == Transcript.type:
+                    transcript = Transcript.from_event(msg)
+                    text = (transcript.text or "").strip()
                     break
             return text
         finally:
-            await client.close()
+            await client.disconnect()
 
     def transcribe_pcm16(self, pcm_bytes: bytes, sample_rate=16000) -> str:
         return asyncio.run(self._transcribe_async(pcm_bytes, sample_rate))
