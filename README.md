@@ -48,6 +48,18 @@ Ladda ned en svensk Piper-modell (ONNX + JSON) till `models/piper/` och referera
 ### Wyoming STT-server
 Kör en Wyoming STT-tjänst (t.ex. Rhasspy Whisper/DeepSpeech) och exponera `host:port` (standard 10300).
 
+**Viktigt**: Se till att Wyoming STT-servern körs innan du startar satelliten. Om anslutning misslyckas kommer systemet att försöka igen enligt konfigurationen (standard: 3 försök med 1 sekunds mellanrum). Du kan anpassa detta i `config.yaml`:
+
+```yaml
+stt:
+  wyoming:
+    host: 127.0.0.1
+    port: 10300
+    max_retries: 3      # antal återförsök
+    retry_delay: 1.0    # sekunder mellan försök
+    timeout: 10.0       # timeout per försök
+```
+
 ## ▶️ Kör
 ```bash
 source .venv/bin/activate
@@ -67,7 +79,18 @@ pip install wyoming
 ```
 Se Rhasspys/HA-communityns dokumentation om `wyoming` om API:et uppdaterats.
 
+## 🔧 Felsökning
 
+### ConnectionRefusedError / Wyoming STT-anslutning misslyckas
+
+Om du får felmeddelandet `ConnectionRefusedError: [Errno 111] Connect call failed`, kontrollera:
+
+1. **Wyoming STT-servern körs**: Starta din Wyoming STT-tjänst innan satelliten
+2. **Rätt host och port**: Kontrollera `stt.wyoming.host` och `stt.wyoming.port` i `config.yaml`
+3. **Brandväggsregler**: Se till att porten är öppen och tillgänglig
+4. **Serverkonfiguration**: Verifiera att Wyoming-servern lyssnar på rätt adress/port
+
+Systemet försöker automatiskt återansluta vid fel (standard: 3 försök). Du kan anpassa detta i konfigurationen.
 
 ---
 

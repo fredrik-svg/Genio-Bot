@@ -33,6 +33,9 @@ def main(cfg_path: str):
         host=wy.get("host", "127.0.0.1"),
         port=wy.get("port", 10300),
         language=stt_cfg.get("language", "sv"),
+        max_retries=wy.get("max_retries", 3),
+        retry_delay=wy.get("retry_delay", 1.0),
+        timeout=wy.get("timeout", 10.0),
     )
 
     tts = PiperTTS(
@@ -58,7 +61,12 @@ def main(cfg_path: str):
             print("🎙️  Lyssnar… (prata, håll en paus för att skicka)")
             pcm = stream.read_frames_until_silence()
             print("🧠  Wyoming STT…")
-            text = stt.transcribe_pcm16(pcm)
+            try:
+                text = stt.transcribe_pcm16(pcm)
+            except ConnectionError as e:
+                print(f"❌ Fel: {e}")
+                print("Avslutar på grund av anslutningsfel till Wyoming STT-server.")
+                break
             if not text:
                 print("(tom transkribering, försöker igen)")
                 continue
