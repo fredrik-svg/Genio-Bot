@@ -101,6 +101,14 @@ stt:
 
 ## ▶️ Kör
 
+### Snabbstart
+
+| Metod | Kommando | Konfig | Beskrivning |
+|-------|----------|--------|-------------|
+| **Docker Compose (rekommenderat)** | `docker-compose up -d` | `config.docker.yaml` | Startar både STT-server och satellit |
+| **Endast STT-server** | `docker-compose -f docker-compose.wyoming-only.yml up -d` | - | STT-server på port 10300 |
+| **Manuellt** | `python src/main.py` | `config.yaml` | Kräver separat STT-server |
+
 ### Med Docker Compose (rekommenderat)
 ```bash
 docker-compose up -d
@@ -113,11 +121,13 @@ docker-compose logs -f
 
 ### Manuellt (Python)
 ```bash
+# Starta Wyoming STT-server först
+docker-compose -f docker-compose.wyoming-only.yml up -d
+
+# Sedan starta satelliten
 source .venv/bin/activate
 python src/main.py
 ```
-
-**OBS**: Se till att Wyoming STT-servern körs separat innan du startar manuellt.
 
 ## 🧪 Flöde
 1) Satelliten spelar in ljud, VAD upptäcker tal.
