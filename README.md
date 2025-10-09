@@ -55,13 +55,13 @@ Du behöver en separat Wyoming STT-server som satelliten ansluter till. Det finn
 
 **Kör både STT-servern och satelliten**:
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 Detta använder `config.docker.yaml` som automatiskt är konfigurerad för Docker-nätverket.
 
 **Kör endast STT-servern** (om du vill köra satelliten manuellt):
 ```bash
-docker-compose -f docker-compose.wyoming-only.yml up -d
+docker compose -f docker-compose.wyoming-only.yml up -d
 ```
 När du kör satelliten manuellt, använd `config.yaml` med `host: 127.0.0.1`.
 
@@ -92,7 +92,7 @@ docker run -d --name wyoming-whisper \
 ```yaml
 stt:
   wyoming:
-    host: 127.0.0.1        # eller 'wyoming-whisper' om du använder docker-compose
+    host: 127.0.0.1        # eller 'wyoming-whisper' om du använder docker compose
     port: 10300
     max_retries: 3         # antal återförsök
     retry_delay: 1.0       # sekunder mellan försök
@@ -105,24 +105,24 @@ stt:
 
 | Metod | Kommando | Konfig | Beskrivning |
 |-------|----------|--------|-------------|
-| **Docker Compose (rekommenderat)** | `docker-compose up -d` | `config.docker.yaml` | Startar både STT-server och satellit |
-| **Endast STT-server** | `docker-compose -f docker-compose.wyoming-only.yml up -d` | - | STT-server på port 10300 |
+| **Docker Compose (rekommenderat)** | `docker compose up -d` | `config.docker.yaml` | Startar både STT-server och satellit |
+| **Endast STT-server** | `docker compose -f docker-compose.wyoming-only.yml up -d` | - | STT-server på port 10300 |
 | **Manuellt** | `python src/main.py` | `config.yaml` | Kräver separat STT-server |
 
 ### Med Docker Compose (rekommenderat)
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 Detta startar både Wyoming STT-servern och satelliten. Loggar kan visas med:
 ```bash
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ### Manuellt (Python)
 ```bash
 # Starta Wyoming STT-server först
-docker-compose -f docker-compose.wyoming-only.yml up -d
+docker compose -f docker-compose.wyoming-only.yml up -d
 
 # Sedan starta satelliten
 source .venv/bin/activate
@@ -155,7 +155,7 @@ Se Rhasspys/HA-communityns dokumentation om `wyoming` om API:et uppdaterats.
 docker run -d -p 10300:10300 rhasspy/wyoming-faster-whisper:latest --model base --language sv
 ```
 
-Eller använd `docker-compose up -d` som startar både STT-servern och satelliten automatiskt.
+Eller använd `docker compose up -d` som startar både STT-servern och satelliten automatiskt.
 
 ### ConnectionRefusedError / Wyoming STT-anslutning misslyckas
 
