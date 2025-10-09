@@ -1,7 +1,20 @@
 version: "3.8"
 services:
+  # Wyoming STT Server (Faster-Whisper)
+  wyoming-whisper:
+    image: rhasspy/wyoming-faster-whisper:latest
+    ports:
+      - "10300:10300"
+    volumes:
+      - whisper-data:/data
+    command: --model base --language sv
+    restart: unless-stopped
+
+  # Satellite client (this application)
   satellite:
     build: .
+    depends_on:
+      - wyoming-whisper
     devices:
       - "/dev/snd:/dev/snd"
     volumes:
@@ -9,3 +22,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     command: ["python", "src/main.py", "--config", "config.yaml"]
+    restart: unless-stopped
+
+volumes:
+  whisper-data:

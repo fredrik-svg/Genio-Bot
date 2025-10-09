@@ -12,7 +12,7 @@ audio:
 stt:
   backend: wyoming
   wyoming:
-    host: 127.0.0.1
+    host: 127.0.0.1           # använd 'wyoming-whisper' om du kör via docker-compose
     port: 10300               # standardport för Wyoming STT
     max_retries: 3            # antal återförsök vid anslutningsfel (valfritt)
     retry_delay: 1.0          # sekunder mellan återförsök (valfritt)
