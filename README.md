@@ -10,7 +10,8 @@ raspi-satellite-1/
 ├─ README.md
 ├─ LICENSE
 ├─ .env.example
-├─ config.example.yaml
+├─ config.example.yaml                 # exempel på konfiguration
+├─ config.docker.yaml                  # konfiguration för docker-compose
 ├─ requirements.txt
 ├─ docker-compose.yml                  # båda tjänsterna (STT + satellit)
 ├─ docker-compose.wyoming-only.yml     # endast STT-server
@@ -56,11 +57,13 @@ Du behöver en separat Wyoming STT-server som satelliten ansluter till. Det finn
 ```bash
 docker-compose up -d
 ```
+Detta använder `config.docker.yaml` som automatiskt är konfigurerad för Docker-nätverket.
 
 **Kör endast STT-servern** (om du vill köra satelliten manuellt):
 ```bash
 docker-compose -f docker-compose.wyoming-only.yml up -d
 ```
+När du kör satelliten manuellt, använd `config.yaml` med `host: 127.0.0.1`.
 
 #### Alternativ 2: Docker direkt
 

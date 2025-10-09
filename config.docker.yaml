@@ -1,0 +1,38 @@
+# Mikrofon/Högtalare
+audio:
+  input_device: null          # index eller null för default
+  sample_rate: 16000
+  channels: 1
+  chunk_ms: 30
+  vad:
+    enabled: true
+    aggressiveness: 2         # 0–3
+
+# STT via Wyoming
+stt:
+  backend: wyoming
+  wyoming:
+    host: wyoming-whisper     # Docker Compose service name
+    port: 10300               # standardport för Wyoming STT
+    max_retries: 3            # antal återförsök vid anslutningsfel (valfritt)
+    retry_delay: 1.0          # sekunder mellan återförsök (valfritt)
+    timeout: 10.0             # timeout i sekunder för anslutning och svar (valfritt)
+  language: sv
+
+# TTS (lokalt Piper)
+tts:
+  piper:
+    model_path: models/piper/sv-SE_piper.onnx
+    config_path: models/piper/sv-SE_piper.onnx.json
+    output_wav: /tmp/tts_out.wav
+    playback_cmd: ["aplay", "-q", "/tmp/tts_out.wav"]
+
+# Central endpoint (n8n webhook)
+backend:
+  n8n_url: "http://<server>:5678/webhook/wyoming-input"
+  response_key: reply
+  timeout_s: 30
+  headers: {}
+
+logging:
+  level: INFO

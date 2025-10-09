@@ -21,7 +21,7 @@ services:
       - ./:/app
     environment:
       - PYTHONUNBUFFERED=1
-    command: ["python", "src/main.py", "--config", "config.yaml"]
+    command: ["python", "src/main.py", "--config", "config.docker.yaml"]
     restart: unless-stopped
 
 volumes:

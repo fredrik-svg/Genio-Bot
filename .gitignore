@@ -11,6 +11,9 @@ __pycache__/
 # Environment variables
 .env
 
+# Configuration files (users should copy from examples)
+config.yaml
+
 # IDE
 .vscode/
 .idea/
