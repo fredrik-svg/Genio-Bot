@@ -10,10 +10,12 @@ raspi-satellite-1/
 ├─ README.md
 ├─ LICENSE
 ├─ .env.example
-├─ config.example.yaml
+├─ config.example.yaml                 # exempel på konfiguration
+├─ config.docker.yaml                  # konfiguration för docker-compose
 ├─ requirements.txt
-├─ docker-compose.yml            # valfritt
-├─ Dockerfile                    # valfritt
+├─ docker-compose.yml                  # båda tjänsterna (STT + satellit)
+├─ docker-compose.wyoming-only.yml     # endast STT-server
+├─ Dockerfile                          # för satelliten
 ├─ systemd/raspi-satellite.service
 └─ src/
    ├─ main.py
@@ -46,22 +48,83 @@ cp config.example.yaml config.yaml
 Ladda ned en svensk Piper-modell (ONNX + JSON) till `models/piper/` och referera i `config.yaml`.
 
 ### Wyoming STT-server
-Kör en Wyoming STT-tjänst (t.ex. Rhasspy Whisper/DeepSpeech) och exponera `host:port` (standard 10300).
+
+Du behöver en separat Wyoming STT-server som satelliten ansluter till. Det finns flera alternativ:
+
+#### Alternativ 1: Docker Compose (Rekommenderat)
+
+**Kör både STT-servern och satelliten**:
+```bash
+docker-compose up -d
+```
+Detta använder `config.docker.yaml` som automatiskt är konfigurerad för Docker-nätverket.
+
+**Kör endast STT-servern** (om du vill köra satelliten manuellt):
+```bash
+docker-compose -f docker-compose.wyoming-only.yml up -d
+```
+När du kör satelliten manuellt, använd `config.yaml` med `host: 127.0.0.1`.
+
+#### Alternativ 2: Docker direkt
+
+**Wyoming Faster-Whisper** (rekommenderas för bästa prestanda):
+```bash
+docker run -d --name wyoming-whisper \
+  -p 10300:10300 \
+  -v whisper-data:/data \
+  rhasspy/wyoming-faster-whisper:latest \
+  --model base --language sv
+```
+
+**Wyoming Whisper** (äldre, men fungerar också):
+```bash
+docker run -d --name wyoming-whisper \
+  -p 10300:10300 \
+  -v whisper-data:/data \
+  rhasspy/wyoming-whisper:latest \
+  --model base --language sv
+```
+
+**Andra tillgängliga modeller**: `tiny`, `base`, `small`, `medium`, `large` (större = bättre kvalitet men långsammare)
 
 **Viktigt**: Se till att Wyoming STT-servern körs innan du startar satelliten. Om anslutning misslyckas kommer systemet att försöka igen enligt konfigurationen (standard: 3 försök med 1 sekunds mellanrum). Du kan anpassa detta i `config.yaml`:
 
 ```yaml
 stt:
   wyoming:
-    host: 127.0.0.1
+    host: 127.0.0.1        # eller 'wyoming-whisper' om du använder docker-compose
     port: 10300
-    max_retries: 3      # antal återförsök
-    retry_delay: 1.0    # sekunder mellan försök
-    timeout: 10.0       # timeout per försök
+    max_retries: 3         # antal återförsök
+    retry_delay: 1.0       # sekunder mellan försök
+    timeout: 10.0          # timeout per försök
 ```
 
 ## ▶️ Kör
+
+### Snabbstart
+
+| Metod | Kommando | Konfig | Beskrivning |
+|-------|----------|--------|-------------|
+| **Docker Compose (rekommenderat)** | `docker-compose up -d` | `config.docker.yaml` | Startar både STT-server och satellit |
+| **Endast STT-server** | `docker-compose -f docker-compose.wyoming-only.yml up -d` | - | STT-server på port 10300 |
+| **Manuellt** | `python src/main.py` | `config.yaml` | Kräver separat STT-server |
+
+### Med Docker Compose (rekommenderat)
 ```bash
+docker-compose up -d
+```
+
+Detta startar både Wyoming STT-servern och satelliten. Loggar kan visas med:
+```bash
+docker-compose logs -f
+```
+
+### Manuellt (Python)
+```bash
+# Starta Wyoming STT-server först
+docker-compose -f docker-compose.wyoming-only.yml up -d
+
+# Sedan starta satelliten
 source .venv/bin/activate
 python src/main.py
 ```
@@ -80,6 +143,19 @@ pip install wyoming
 Se Rhasspys/HA-communityns dokumentation om `wyoming` om API:et uppdaterats.
 
 ## 🔧 Felsökning
+
+### Docker-fel: "pull access denied for rhasspy/wyoming-satellite"
+
+**Fel**: `Unable to find image 'rhasspy/wyoming-satellite:latest' locally`
+
+**Lösning**: Bilden `rhasspy/wyoming-satellite` finns inte. Detta repository **är själva satelliten**. Du behöver istället köra en Wyoming STT-server separat:
+
+```bash
+# Använd wyoming-faster-whisper istället
+docker run -d -p 10300:10300 rhasspy/wyoming-faster-whisper:latest --model base --language sv
+```
+
+Eller använd `docker-compose up -d` som startar både STT-servern och satelliten automatiskt.
 
 ### ConnectionRefusedError / Wyoming STT-anslutning misslyckas
 
