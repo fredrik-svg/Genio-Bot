@@ -108,6 +108,7 @@ stt:
 | **Docker Compose (rekommenderat)** | `docker-compose up -d` | `config.docker.yaml` | Startar både STT-server och satellit |
 | **Endast STT-server** | `docker-compose -f docker-compose.wyoming-only.yml up -d` | - | STT-server på port 10300 |
 | **Manuellt** | `python src/main.py` | `config.yaml` | Kräver separat STT-server |
+| **Web Frontend** | `python src/web.py` | `config.yaml` | Textbaserat gränssnitt (inget STT/TTS) |
 
 ### Med Docker Compose (rekommenderat)
 ```bash
@@ -129,11 +130,30 @@ source .venv/bin/activate
 python src/main.py
 ```
 
+### Web Frontend
+Om du vill använda en textbaserad frontend istället för röstinmatning:
+
+```bash
+source .venv/bin/activate
+python src/web.py --config config.yaml
+```
+
+Detta startar en webbserver på `http://localhost:5000` där du kan ställa frågor i textform direkt till backend-flödet. Perfekt för testning eller när du inte har tillgång till mikrofon/högtalare.
+
+**Observera**: Web-frontend kräver endast backend-konfiguration och hoppar över STT/TTS/audio-komponenterna.
+
 ## 🧪 Flöde
+
+### Röstflöde (main.py)
 1) Satelliten spelar in ljud, VAD upptäcker tal.
 2) PCM16 skickas som yttrande till **Wyoming STT** → text.
 3) Text POST:as till `backend.n8n_url` → LLM → svarstext tillbaka.
 4) **Piper TTS** genererar WAV och spelar upp svaret.
+
+### Web Frontend-flöde (web.py)
+1) Användaren skriver text i webbgränssnittet.
+2) Text POST:as direkt till `backend.n8n_url` → LLM → svarstext tillbaka.
+3) Svaret visas i webbgränssnittet.
 
 ## ❗ Obs om Python-biblioteket `wyoming`
 Koden använder paketet **`wyoming`** (PyPI) som implementerar Wyoming-protokollet. Om paketet saknas:

@@ -6,3 +6,5 @@ soundfile
 requests
 # Wyoming-protokollklient (PyPI)
 wyoming
+# Web frontend
+flask
