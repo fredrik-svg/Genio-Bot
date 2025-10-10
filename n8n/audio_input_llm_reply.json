@@ -7,7 +7,7 @@
   "nodes": [
     {
       "parameters": {
-        "path": "text-input",
+        "path": "audio-input",
         "options": {
           "responseMode": "lastNode",
           "responseData": "allEntries",
@@ -15,17 +15,56 @@
           "allowUnauthorizedCerts": true
         }
       },
-      "id": "WebhookTrigger",
-      "name": "HTTP Webhook (Text Input)",
+      "id": "AudioWebhookTrigger",
+      "name": "HTTP Webhook (Audio Input)",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.2,
       "position": [
         280,
         300
       ],
-      "webhookId": "text-input",
+      "webhookId": "audio-input",
       "notesInFlow": true,
-      "notes": "Tar emot JSON: { device, text } från satelliten."
+      "notes": "Tar emot multipart/form-data: { device, audio } från satelliten."
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "requestMethod": "POST",
+        "url": "https://your-stt-server.example.com/api/transcribe",
+        "jsonParameters": false,
+        "options": {
+          "timeout": 30000
+        },
+        "sendBody": true,
+        "sendBinaryData": true,
+        "binaryPropertyName": "audio"
+      },
+      "id": "HTTPtoSTT",
+      "name": "HTTP Request → STT",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        560,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "Skicka ljudfil till Whisper/STT-server. Byt URL till din STT-endpoint (t.ex. faster-whisper-server eller OpenAI Whisper API)."
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extrahera transkriberad text från STT-respons\nconst d = items[0].json || {};\nlet text = d.text || d.transcription || d.transcript || \"\";\nif (!text) {\n  throw new Error(\"Ingen text från STT\");\n}\nreturn [{ json: { text, device: items[0].json.device } }];"
+      },
+      "id": "ExtractText",
+      "name": "Function: Extract Text",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        840,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "Extrahera text från STT-respons."
     },
     {
       "parameters": {
@@ -37,14 +76,14 @@
           "timeout": 30000
         },
         "sendBody": true,
-        "bodyParametersJson": "{\"model\": \"llama-3.1-8b\", \"stream\": false, \"prompt\": \"Svara kort och hj\\u00e4lpsamt p\\u00e5 svenska: {{$json[\\\"text\\\"]}}\"}"
+        "bodyParametersJson": "{\"model\": \"llama-3.1-8b\", \"stream\": false, \"prompt\": \"Svara kort och hjälpsamt på svenska: {{$json[\\\"text\\\"]}}\"}"
       },
       "id": "HTTPtoLLM",
       "name": "HTTP Request → LLM",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        560,
+        1120,
         300
       ],
       "notesInFlow": true,
@@ -59,7 +98,7 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 2,
       "position": [
-        840,
+        1400,
         300
       ]
     },
@@ -73,7 +112,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1100,
+        1660,
         300
       ],
       "notesInFlow": true,
@@ -81,7 +120,29 @@
     }
   ],
   "connections": {
-    "HTTP Webhook (Text Input)": {
+    "HTTP Webhook (Audio Input)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request → STT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request → STT": {
+      "main": [
+        [
+          {
+            "node": "Function: Extract Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function: Extract Text": {
       "main": [
         [
           {
@@ -119,5 +180,5 @@
   "settings": {
     "timezone": "Europe/Stockholm"
   },
-  "name": "Genio-Bot Text Input -> LLM -> Reply"
+  "name": "Genio-Bot Audio Input -> STT -> LLM -> Reply"
 }

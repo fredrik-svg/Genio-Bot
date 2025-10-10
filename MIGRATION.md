@@ -140,4 +140,19 @@ Nya webhooks:
 - **Text**: `/webhook/text-input` (för textfrågor)
 - **Audio**: `/webhook/audio-input` (för ljudfiler i upload-läge)
 
-Uppdatera dina n8n-flöden att använda de nya webhook-adresserna.
+### Hur uppdatera n8n
+
+1. **Ta bort gamla workflow** (om du har den):
+   - Öppna n8n
+   - Ta bort workflown som använder `/webhook/wyoming-input`
+
+2. **Importera nya workflows**:
+   - Importera `n8n/wyoming_satellite_llm_reply.json` (obligatorisk - för text input)
+   - Importera `n8n/audio_input_llm_reply.json` (valfri - endast för mode: upload)
+   - Aktivera workflow(s) i n8n
+
+3. **Konfigurera endpoints**:
+   - Uppdatera LLM-URL i båda workflows
+   - För audio workflow: uppdatera STT-server URL
+
+**OBS**: Om du får 404-fel efter uppdatering, kontrollera att de nya workflows är korrekt importerade och aktiverade i n8n.
