@@ -14,8 +14,27 @@ class BackendClient:
     def ask(self, device: str, text: str) -> str:
         """Send text query to backend"""
         payload = {"device": device, "text": text}
-        r = requests.post(self.url, json=payload, timeout=self.timeout_s, headers=self.headers)
-        r.raise_for_status()
+        try:
+            r = requests.post(self.url, json=payload, timeout=self.timeout_s, headers=self.headers)
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                error_msg = (
+                    f"❌ 404 Not Found: {self.url}\n"
+                    f"\n"
+                    f"Möjliga orsaker:\n"
+                    f"1. n8n-workflow inte importerat/aktiverat\n"
+                    f"   → Importera 'n8n/wyoming_satellite_llm_reply.json' i n8n\n"
+                    f"   → Aktivera workflow i n8n\n"
+                    f"2. Fel URL i config.yaml\n"
+                    f"   → Kontrollera att 'backend.n8n_url' är korrekt\n"
+                    f"3. Gammal workflow används\n"
+                    f"   → Den nya webhook-path är '/webhook/text-input'\n"
+                    f"\n"
+                    f"Se README.md avsnitt '404-fel' för mer hjälp."
+                )
+                raise requests.exceptions.HTTPError(error_msg, response=e.response) from e
+            raise
         data = r.json() if r.headers.get("content-type", "").startswith("application/json") else {"reply": r.text}
         return data.get(self.response_key, "(ingen respons)")
     
@@ -35,14 +54,34 @@ class BackendClient:
             with open(tmp_path, 'rb') as audio_file:
                 files = {'audio': ('audio.wav', audio_file, 'audio/wav')}
                 data = {'device': device}
-                r = requests.post(
-                    self.audio_url,
-                    files=files,
-                    data=data,
-                    timeout=self.timeout_s,
-                    headers=self.headers
-                )
-                r.raise_for_status()
+                try:
+                    r = requests.post(
+                        self.audio_url,
+                        files=files,
+                        data=data,
+                        timeout=self.timeout_s,
+                        headers=self.headers
+                    )
+                    r.raise_for_status()
+                except requests.exceptions.HTTPError as e:
+                    if e.response.status_code == 404:
+                        error_msg = (
+                            f"❌ 404 Not Found: {self.audio_url}\n"
+                            f"\n"
+                            f"Möjliga orsaker:\n"
+                            f"1. n8n audio workflow inte importerat/aktiverat\n"
+                            f"   → Importera 'n8n/audio_input_llm_reply.json' i n8n\n"
+                            f"   → Aktivera workflow i n8n\n"
+                            f"   → Konfigurera OpenAI API-nyckel för Whisper\n"
+                            f"2. Fel URL i config.yaml\n"
+                            f"   → Kontrollera att 'backend.audio_url' är korrekt\n"
+                            f"3. mode: upload kräver audio workflow\n"
+                            f"   → Den nya webhook-path är '/webhook/audio-input'\n"
+                            f"\n"
+                            f"Se README.md och MIGRATION.md för mer hjälp."
+                        )
+                        raise requests.exceptions.HTTPError(error_msg, response=e.response) from e
+                    raise
                 
             response_data = r.json() if r.headers.get("content-type", "").startswith("application/json") else {"reply": r.text}
             return response_data.get(self.response_key, "(ingen respons)")
