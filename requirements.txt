@@ -4,7 +4,7 @@ webrtcvad-wheels
 numpy
 soundfile
 requests
-# Wyoming-protokollklient (PyPI)
-wyoming
+# STT using faster-whisper (more efficient than openai-whisper)
+faster-whisper
 # Web frontend
 flask

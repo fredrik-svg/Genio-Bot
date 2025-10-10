@@ -8,16 +8,13 @@ audio:
     enabled: true
     aggressiveness: 2         # 0–3
 
-# STT via Wyoming
+# STT (Speech-to-Text)
 stt:
-  backend: wyoming
-  wyoming:
-    host: wyoming-whisper     # Docker Compose service name
-    port: 10300               # standardport för Wyoming STT
-    max_retries: 3            # antal återförsök vid anslutningsfel (valfritt)
-    retry_delay: 1.0          # sekunder mellan återförsök (valfritt)
-    timeout: 10.0             # timeout i sekunder för anslutning och svar (valfritt)
+  mode: local                 # "local" för lokal Whisper-transkribering, "upload" för att skicka ljud till n8n
   language: sv
+  piper:
+    model: base               # tiny, base, small, medium, large (större = bättre kvalitet men långsammare)
+    device: cpu               # cpu eller cuda
 
 # TTS (lokalt Piper)
 tts:
@@ -29,7 +26,8 @@ tts:
 
 # Central endpoint (n8n webhook)
 backend:
-  n8n_url: "http://<server>:5678/webhook/wyoming-input"
+  n8n_url: "https://ai.genio-bot.com/webhook/text-input"     # för textfrågor
+  audio_url: "https://ai.genio-bot.com/webhook/audio-input"  # för ljuduppladdning (om mode: upload)
   response_key: reply
   timeout_s: 30
   headers: {}

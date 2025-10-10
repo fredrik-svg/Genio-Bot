@@ -1,8 +1,8 @@
 # raspi-satellite-1
 
-Raspberry Pi 5 “satellit”-klient för röststyrning med **Wyoming STT (Rhasspy)** och **Piper TTS** som pratar med en central server (t.ex. n8n-webhook + LLM-backend).
+Raspberry Pi 5 “satellit”-klient för röststyrning med **Whisper STT** och **Piper TTS** som pratar med en central server (t.ex. n8n-webhook + LLM-backend).
 
-> **Mål**: Spela in tal → transkribera till text (Wyoming STT) → skicka till central LLM via n8n → få textsvar → läsa upp svaret lokalt med Piper.
+> **Mål**: Spela in tal → transkribera till text (Whisper STT) → skicka till central LLM via n8n → få textsvar → läsa upp svaret lokalt med Piper.
 
 ## 📁 Struktur
 ```
@@ -20,9 +20,10 @@ raspi-satellite-1/
 └─ src/
    ├─ main.py
    ├─ audio.py
-   ├─ stt_wyoming.py
+   ├─ stt_piper.py
    ├─ tts.py
    ├─ client.py
+   ├─ web.py
    └─ util.py
 ```
 
@@ -47,56 +48,52 @@ cp config.example.yaml config.yaml
 ### Piper röst (svenska)
 Ladda ned en svensk Piper-modell (ONNX + JSON) till `models/piper/` och referera i `config.yaml`.
 
-### Wyoming STT-server
+### STT-konfiguration
 
-Du behöver en separat Wyoming STT-server som satelliten ansluter till. Det finns flera alternativ:
+Systemet stödjer två lägen för tal-till-text:
 
-#### Alternativ 1: Docker Compose (Rekommenderat)
+#### Läge 1: Lokal STT (mode: local)
+STT körs lokalt på enheten med faster-whisper. Detta kräver ingen extern server.
 
-**Kör både STT-servern och satelliten**:
-```bash
-docker-compose up -d
-```
-Detta använder `config.docker.yaml` som automatiskt är konfigurerad för Docker-nätverket.
+**Fördelar:**
+- Ingen beroende på extern server
+- Fungerar offline
+- Snabbare för små modeller
 
-**Kör endast STT-servern** (om du vill köra satelliten manuellt):
-```bash
-docker-compose -f docker-compose.wyoming-only.yml up -d
-```
-När du kör satelliten manuellt, använd `config.yaml` med `host: 127.0.0.1`.
+**Nackdelar:**
+- Kräver CPU/GPU-resurser på enheten
+- Större modeller kan vara långsamma
 
-#### Alternativ 2: Docker direkt
-
-**Wyoming Faster-Whisper** (rekommenderas för bästa prestanda):
-```bash
-docker run -d --name wyoming-whisper \
-  -p 10300:10300 \
-  -v whisper-data:/data \
-  rhasspy/wyoming-faster-whisper:latest \
-  --model base --language sv
-```
-
-**Wyoming Whisper** (äldre, men fungerar också):
-```bash
-docker run -d --name wyoming-whisper \
-  -p 10300:10300 \
-  -v whisper-data:/data \
-  rhasspy/wyoming-whisper:latest \
-  --model base --language sv
-```
-
-**Andra tillgängliga modeller**: `tiny`, `base`, `small`, `medium`, `large` (större = bättre kvalitet men långsammare)
-
-**Viktigt**: Se till att Wyoming STT-servern körs innan du startar satelliten. Om anslutning misslyckas kommer systemet att försöka igen enligt konfigurationen (standard: 3 försök med 1 sekunds mellanrum). Du kan anpassa detta i `config.yaml`:
-
+**Konfiguration i config.yaml:**
 ```yaml
 stt:
-  wyoming:
-    host: 127.0.0.1        # eller 'wyoming-whisper' om du använder docker-compose
-    port: 10300
-    max_retries: 3         # antal återförsök
-    retry_delay: 1.0       # sekunder mellan försök
-    timeout: 10.0          # timeout per försök
+  mode: local
+  language: sv
+  piper:
+    model: base          # tiny, base, small, medium, large
+    device: cpu          # cpu eller cuda
+```
+
+#### Läge 2: Audio Upload (mode: upload)
+Ljudfiler skickas direkt till n8n för STT-processering på servern.
+
+**Fördelar:**
+- Minimal CPU-användning på enheten
+- STT-processering sker på servern
+- Lättare att uppdatera STT-modeller
+
+**Nackdelar:**
+- Kräver internetanslutning
+- Lite långsammare på grund av uppladdningstid
+
+**Konfiguration i config.yaml:**
+```yaml
+stt:
+  mode: upload
+  language: sv
+
+backend:
+  audio_url: "https://ai.genio-bot.com/webhook/audio-input"
 ```
 
 ## ▶️ Kör
@@ -115,14 +112,14 @@ stt:
 docker-compose up -d
 ```
 
-Detta startar både Wyoming STT-servern och satelliten. Loggar kan visas med:
+Detta startar både Whisper STT-servern och satelliten. Loggar kan visas med:
 ```bash
 docker-compose logs -f
 ```
 
 ### Manuellt (Python)
 ```bash
-# Starta Wyoming STT-server först
+# Starta Whisper STT-server först
 docker-compose -f docker-compose.wyoming-only.yml up -d
 
 # Sedan starta satelliten
@@ -145,48 +142,66 @@ Detta startar en webbserver på `http://localhost:5000` där du kan ställa frå
 ## 🧪 Flöde
 
 ### Röstflöde (main.py)
+
+**Läge 1: Lokal STT (mode: local)**
 1) Satelliten spelar in ljud, VAD upptäcker tal.
-2) PCM16 skickas som yttrande till **Wyoming STT** → text.
+2) PCM16 transkriberas lokalt med **Whisper** → text.
 3) Text POST:as till `backend.n8n_url` → LLM → svarstext tillbaka.
 4) **Piper TTS** genererar WAV och spelar upp svaret.
+
+**Läge 2: Audio Upload (mode: upload)**
+1) Satelliten spelar in ljud, VAD upptäcker tal.
+2) Ljudfilen skickas direkt till `backend.audio_url` → n8n processar → text + LLM → svarstext tillbaka.
+3) **Piper TTS** genererar WAV och spelar upp svaret.
 
 ### Web Frontend-flöde (web.py)
 1) Användaren skriver text i webbgränssnittet.
 2) Text POST:as direkt till `backend.n8n_url` → LLM → svarstext tillbaka.
 3) Svaret visas i webbgränssnittet.
 
-## ❗ Obs om Python-biblioteket `wyoming`
-Koden använder paketet **`wyoming`** (PyPI) som implementerar Wyoming-protokollet. Om paketet saknas:
+## ❗ Obs om Python-biblioteket `faster-whisper`
+Koden använder paketet **`faster-whisper`** för lokal STT. Detta installeras automatiskt via requirements.txt:
 ```bash
-pip install wyoming
+pip install faster-whisper
 ```
-Se Rhasspys/HA-communityns dokumentation om `wyoming` om API:et uppdaterats.
+
+För GPU-acceleration (CUDA), installera även:
+```bash
+pip install faster-whisper[gpu]
+```
 
 ## 🔧 Felsökning
 
-### Docker-fel: "pull access denied for rhasspy/wyoming-satellite"
+### STT-fel: "Neither faster-whisper nor whisper is installed"
 
-**Fel**: `Unable to find image 'rhasspy/wyoming-satellite:latest' locally`
+**Fel**: Saknar STT-bibliotek för lokal transkribering.
 
-**Lösning**: Bilden `rhasspy/wyoming-satellite` finns inte. Detta repository **är själva satelliten**. Du behöver istället köra en Wyoming STT-server separat:
-
+**Lösning**: Installera faster-whisper:
 ```bash
-# Använd wyoming-faster-whisper istället
-docker run -d -p 10300:10300 rhasspy/wyoming-faster-whisper:latest --model base --language sv
+pip install faster-whisper
 ```
 
-Eller använd `docker-compose up -d` som startar både STT-servern och satelliten automatiskt.
+Alternativt, använd audio upload-läge istället:
+```yaml
+stt:
+  mode: upload
+```
 
-### ConnectionRefusedError / Wyoming STT-anslutning misslyckas
+### Audio upload-fel: "audio_url not configured"
 
-Om du får felmeddelandet `ConnectionRefusedError: [Errno 111] Connect call failed`, kontrollera:
+Om du använder `mode: upload` men får detta fel, lägg till audio_url i config.yaml:
 
-1. **Wyoming STT-servern körs**: Starta din Wyoming STT-tjänst innan satelliten
-2. **Rätt host och port**: Kontrollera `stt.wyoming.host` och `stt.wyoming.port` i `config.yaml`
-3. **Brandväggsregler**: Se till att porten är öppen och tillgänglig
-4. **Serverkonfiguration**: Verifiera att Wyoming-servern lyssnar på rätt adress/port
+```yaml
+backend:
+  audio_url: "https://ai.genio-bot.com/webhook/audio-input"
+```
 
-Systemet försöker automatiskt återansluta vid fel (standard: 3 försök). Du kan anpassa detta i konfigurationen.
+### Långsam STT med stora modeller
+
+Om lokal STT är långsam, prova:
+1. Använd en mindre modell (tiny eller base)
+2. Byt till audio upload-läge
+3. Aktivera GPU-stöd om tillgängligt (device: cuda)
 
 ---
 
@@ -194,7 +209,9 @@ Systemet försöker automatiskt återansluta vid fel (standard: 3 försök). Du 
 En färdig n8n-export finns i `n8n/wyoming_satellite_llm_reply.json`.
 - Importera i n8n (Menu → Import from File).
 - Ändra URL i noden **HTTP Request → LLM** till din LLM-endpoint.
-- Flödet exponerar webhook på `/webhook/wyoming-input`.
+- Flödet exponerar webhooks:
+  - `/webhook/text-input` för textfrågor
+  - `/webhook/audio-input` för ljudfiler (om mode: upload)
 
 
 
