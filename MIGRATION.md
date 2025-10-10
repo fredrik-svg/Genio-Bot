@@ -153,6 +153,11 @@ Nya webhooks:
 
 3. **Konfigurera endpoints**:
    - Uppdatera LLM-URL i båda workflows
-   - För audio workflow: uppdatera STT-server URL
+   - För audio workflow: 
+     - Använder nu **OpenAI Whisper API** för transkribering
+     - Konfigurera OpenAI API-nyckel i n8n credentials (HTTP Header Auth)
+     - Uppdatera AI Agent (LLM) URL
 
-**OBS**: Om du får 404-fel efter uppdatering, kontrollera att de nya workflows är korrekt importerade och aktiverade i n8n.
+**OBS**: 
+- Audio workflow kräver nu OpenAI API-nyckel för Whisper transkribering
+- Om du får 404-fel efter uppdatering, kontrollera att de nya workflows är korrekt importerade och aktiverade i n8n.

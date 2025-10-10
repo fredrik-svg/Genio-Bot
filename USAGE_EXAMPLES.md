@@ -99,19 +99,21 @@ python src/main.py --config config.yaml
 ### Vad händer
 1. 🎤 Du pratar in mikrofonen
 2. 📤 Ljudfilen (WAV) skickas direkt till n8n på `https://ai.genio-bot.com/webhook/audio-input`
-3. 🧠 n8n kör STT på servern (t.ex. med Whisper, Deepgram, etc.)
-4. 🤖 n8n processerar med LLM och svarar
-5. 🔊 Piper TTS läser upp svaret
+3. 🧠 n8n skickar ljudet till **OpenAI Whisper API** för transkribering
+4. 🤖 AI Agent (LLM) hanterar frågan baserat på transkriberad text
+5. 🔊 Piper TTS läser upp svaret från AI Agent
 
 ### Fördelar
 - Minimal CPU-användning på enheten
 - Ingen nedladdning av stora modeller
-- Flexibel STT-motor på servern
+- Hög kvalitet med OpenAI Whisper API
+- Centraliserad processering och loggning
 
 ### Nackdelar
 - Kräver snabb internetanslutning
-- Ljuddata skickas till servern
+- Ljuddata skickas till OpenAI
 - Lite högre latens
+- Kräver OpenAI API-nyckel (kostnad per minut audio)
 
 ---
 
@@ -140,12 +142,20 @@ python src/main.py --config config.yaml
   - `device`: "raspi-5-vardagsrum"
   - `audio`: WAV-fil (16kHz, mono, 16-bit)
 
+**Flöde i n8n:**
+1. Webhook tar emot ljudfilen
+2. Ljudfilen skickas till **OpenAI Whisper API** för transkribering
+3. Transkriberad text skickas till AI Agent (LLM)
+4. AI Agent returnerar svar
+
 **Förväntat svar:**
 ```json
 {
   "reply": "Klockan är 14:30"
 }
 ```
+
+**OBS:** Kräver OpenAI API-nyckel konfigurerad i n8n credentials.
 
 ---
 

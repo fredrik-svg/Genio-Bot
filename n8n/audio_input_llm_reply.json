@@ -29,42 +29,77 @@
     },
     {
       "parameters": {
-        "authentication": "none",
+        "functionCode": "// OpenAI förväntar sig att ljudfilen heter 'file', inte 'audio'\n// Byt namn på binary property från 'audio' till 'file'\nconst item = items[0];\nif (item.binary && item.binary.audio) {\n  item.binary.file = item.binary.audio;\n  delete item.binary.audio;\n}\nreturn items;"
+      },
+      "id": "PrepareForOpenAI",
+      "name": "Function: Prepare for OpenAI",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [
+        420,
+        300
+      ],
+      "notesInFlow": true,
+      "notes": "Byter namn på binary property från 'audio' till 'file' för OpenAI API."
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
         "requestMethod": "POST",
-        "url": "https://your-stt-server.example.com/api/transcribe",
+        "url": "https://api.openai.com/v1/audio/transcriptions",
         "jsonParameters": false,
         "options": {
           "timeout": 30000
         },
         "sendBody": true,
+        "specifyBody": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "whisper-1"
+            },
+            {
+              "name": "language",
+              "value": "sv"
+            }
+          ]
+        },
         "sendBinaryData": true,
-        "binaryPropertyName": "audio"
+        "binaryPropertyName": "file"
       },
       "id": "HTTPtoSTT",
-      "name": "HTTP Request → STT",
+      "name": "HTTP Request → OpenAI Whisper",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        560,
+        700,
         300
       ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "openai-api-key",
+          "name": "OpenAI API Key"
+        }
+      },
       "notesInFlow": true,
-      "notes": "Skicka ljudfil till Whisper/STT-server. Byt URL till din STT-endpoint (t.ex. faster-whisper-server eller OpenAI Whisper API)."
+      "notes": "Skickar ljudfil till OpenAI Whisper API för transkribering. Kräver OpenAI API-nyckel i credentials."
     },
     {
       "parameters": {
-        "functionCode": "// Extrahera transkriberad text från STT-respons\nconst d = items[0].json || {};\nlet text = d.text || d.transcription || d.transcript || \"\";\nif (!text) {\n  throw new Error(\"Ingen text från STT\");\n}\nreturn [{ json: { text, device: items[0].json.device } }];"
+        "functionCode": "// Extrahera transkriberad text från OpenAI Whisper-respons\n// OpenAI returnerar: { text: \"...\" }\nconst d = items[0].json || {};\nlet text = d.text || \"\";\nif (!text) {\n  throw new Error(\"Ingen text från OpenAI Whisper\");\n}\n// Hämta device från den ursprungliga webhook-requesten\nconst device = $('HTTP Webhook (Audio Input)').first().json.device || 'unknown';\nreturn [{ json: { text, device } }];"
       },
       "id": "ExtractText",
-      "name": "Function: Extract Text",
+      "name": "Function: Extract Text from OpenAI",
       "type": "n8n-nodes-base.function",
       "typeVersion": 2,
       "position": [
-        840,
+        980,
         300
       ],
       "notesInFlow": true,
-      "notes": "Extrahera text från STT-respons."
+      "notes": "Extrahera text från OpenAI Whisper-respons och bevara device-info."
     },
     {
       "parameters": {
@@ -79,15 +114,15 @@
         "bodyParametersJson": "{\"model\": \"llama-3.1-8b\", \"stream\": false, \"prompt\": \"Svara kort och hjälpsamt på svenska: {{$json[\\\"text\\\"]}}\"}"
       },
       "id": "HTTPtoLLM",
-      "name": "HTTP Request → LLM",
+      "name": "HTTP Request → AI Agent (LLM)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1120,
+        1260,
         300
       ],
       "notesInFlow": true,
-      "notes": "Byt URL till din vLLM/OpenAI-proxy. Returnerar JSON med fält t.ex. { reply } eller { text }."
+      "notes": "AI Agent som hanterar frågan efter OpenAI transkribering. Byt URL till din vLLM/OpenAI-proxy."
     },
     {
       "parameters": {
@@ -98,7 +133,7 @@
       "type": "n8n-nodes-base.function",
       "typeVersion": 2,
       "position": [
-        1400,
+        1540,
         300
       ]
     },
@@ -112,11 +147,11 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1660,
+        1800,
         300
       ],
       "notesInFlow": true,
-      "notes": "Returnerar { reply } till satelliten."
+      "notes": "Returnerar { reply } till satelliten (Raspberry PI)."
     }
   ],
   "connections": {
@@ -124,36 +159,47 @@
       "main": [
         [
           {
-            "node": "HTTP Request → STT",
+            "node": "Function: Prepare for OpenAI",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "HTTP Request → STT": {
+    "Function: Prepare for OpenAI": {
       "main": [
         [
           {
-            "node": "Function: Extract Text",
+            "node": "HTTP Request → OpenAI Whisper",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Function: Extract Text": {
+    "HTTP Request → OpenAI Whisper": {
       "main": [
         [
           {
-            "node": "HTTP Request → LLM",
+            "node": "Function: Extract Text from OpenAI",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "HTTP Request → LLM": {
+    "Function: Extract Text from OpenAI": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request → AI Agent (LLM)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request → AI Agent (LLM)": {
       "main": [
         [
           {
@@ -180,5 +226,5 @@
   "settings": {
     "timezone": "Europe/Stockholm"
   },
-  "name": "Genio-Bot Audio Input -> STT -> LLM -> Reply"
+  "name": "Genio-Bot Audio Input -> OpenAI Whisper -> AI Agent -> Reply"
 }

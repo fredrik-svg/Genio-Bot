@@ -7,6 +7,7 @@ Raspberry Pi 5 “satellit”-klient för röststyrning med **Whisper STT** och 
 📚 **Dokumentation:**
 - [MIGRATION.md](MIGRATION.md) - Migrering från Wyoming till Whisper
 - [USAGE_EXAMPLES.md](USAGE_EXAMPLES.md) - Praktiska användningsexempel
+- [OPENAI_SETUP.md](OPENAI_SETUP.md) - OpenAI Whisper API integration (för audio upload)
 
 ## 📁 Struktur
 ```
@@ -239,12 +240,21 @@ Färdiga n8n-exporter finns i `n8n/`-katalogen:
 ### 2. Audio Input Workflow (Valfri - endast för mode: upload)
 **Fil**: `n8n/audio_input_llm_reply.json`
 - Importera i n8n om du vill använda `mode: upload` i STT-konfigurationen.
-- Ändra URL för **HTTP Request → STT** till din Whisper/STT-server.
-- Ändra URL för **HTTP Request → LLM** till din LLM-endpoint.
+- **Använder OpenAI Whisper API** för ljudtranskribering
+- Konfigurera OpenAI API-nyckel i n8n credentials (HTTP Header Auth med `Authorization: Bearer sk-...`)
+- Ändra URL för **HTTP Request → AI Agent (LLM)** till din LLM-endpoint.
 - Exponerar webhook: `/webhook/audio-input` för ljuduppladdning
 - Används av `main.py` när `stt.mode: upload`
 
-**OBS**: Om du får 404-fel på webhook-endpoints, kontrollera att du har importerat rätt workflow(s) i n8n och att webhook-paths matchar.
+**Flöde:**
+1. Raspberry PI skickar ljudfil till n8n webhook
+2. OpenAI Whisper API transkriberar ljudet till text
+3. AI Agent (LLM) hanterar frågan
+4. Svar skickas tillbaka till Raspberry PI
+
+**OBS**: 
+- Kräver OpenAI API-nyckel för Whisper transkribering
+- Om du får 404-fel på webhook-endpoints, kontrollera att du har importerat rätt workflow(s) i n8n och att webhook-paths matchar.
 
 
 
