@@ -13,8 +13,7 @@ raspi-satellite-1/
 ├─ config.example.yaml                 # exempel på konfiguration
 ├─ config.docker.yaml                  # konfiguration för docker-compose
 ├─ requirements.txt
-├─ docker-compose.yml                  # båda tjänsterna (STT + satellit)
-├─ docker-compose.wyoming-only.yml     # endast STT-server
+├─ docker-compose.yml                  # satellit med lokal STT
 ├─ Dockerfile                          # för satelliten
 ├─ systemd/raspi-satellite.service
 └─ src/
@@ -102,9 +101,8 @@ backend:
 
 | Metod | Kommando | Konfig | Beskrivning |
 |-------|----------|--------|-------------|
-| **Docker Compose (rekommenderat)** | `docker-compose up -d` | `config.docker.yaml` | Startar både STT-server och satellit |
-| **Endast STT-server** | `docker-compose -f docker-compose.wyoming-only.yml up -d` | - | STT-server på port 10300 |
-| **Manuellt** | `python src/main.py` | `config.yaml` | Kräver separat STT-server |
+| **Docker Compose (rekommenderat)** | `docker-compose up -d` | `config.docker.yaml` | Startar satelliten med lokal STT |
+| **Manuellt** | `python src/main.py` | `config.yaml` | Lokal STT eller audio upload |
 | **Web Frontend** | `python src/web.py` | `config.yaml` | Textbaserat gränssnitt (inget STT/TTS) |
 
 ### Med Docker Compose (rekommenderat)
@@ -112,20 +110,18 @@ backend:
 docker-compose up -d
 ```
 
-Detta startar både Whisper STT-servern och satelliten. Loggar kan visas med:
+Detta startar satelliten med lokal Whisper STT. Loggar kan visas med:
 ```bash
 docker-compose logs -f
 ```
 
 ### Manuellt (Python)
 ```bash
-# Starta Whisper STT-server först
-docker-compose -f docker-compose.wyoming-only.yml up -d
-
-# Sedan starta satelliten
 source .venv/bin/activate
-python src/main.py
+python src/main.py --config config.yaml
 ```
+
+**Obs**: Första gången kan det ta lite tid när Whisper-modellen laddas ned.
 
 ### Web Frontend
 Om du vill använda en textbaserad frontend istället för röstinmatning:
