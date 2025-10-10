@@ -4,6 +4,10 @@ Raspberry Pi 5 “satellit”-klient för röststyrning med **Whisper STT** och 
 
 > **Mål**: Spela in tal → transkribera till text (Whisper STT) → skicka till central LLM via n8n → få textsvar → läsa upp svaret lokalt med Piper.
 
+📚 **Dokumentation:**
+- [MIGRATION.md](MIGRATION.md) - Migrering från Wyoming till Whisper
+- [USAGE_EXAMPLES.md](USAGE_EXAMPLES.md) - Praktiska användningsexempel
+
 ## 📁 Struktur
 ```
 raspi-satellite-1/
