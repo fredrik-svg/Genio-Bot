@@ -203,15 +203,48 @@ Om lokal STT är långsam, prova:
 2. Byt till audio upload-läge
 3. Aktivera GPU-stöd om tillgängligt (device: cuda)
 
+### 404-fel: "Not Found for url: .../webhook/text-input"
+
+**Fel**: n8n-servern returnerar 404 på webhook-endpoints.
+
+**Möjliga orsaker och lösningar**:
+
+1. **n8n-workflow inte importerat**
+   - Importera `n8n/wyoming_satellite_llm_reply.json` i n8n (Menu → Import from File)
+   - För `mode: upload`, importera även `n8n/audio_input_llm_reply.json`
+   - Aktivera workflow i n8n
+
+2. **Gammal workflow används**
+   - Den gamla webhooks var `/webhook/wyoming-input`
+   - Uppdatera till den nya workflown som använder `/webhook/text-input`
+   - Se MIGRATION.md för mer information
+
+3. **Fel URL i config.yaml**
+   - Kontrollera att `backend.n8n_url` pekar på rätt server
+   - Verifiera att servern är tillgänglig (testa med curl eller webbläsare)
+
 ---
 
 ## n8n-export
-En färdig n8n-export finns i `n8n/wyoming_satellite_llm_reply.json`.
+
+Färdiga n8n-exporter finns i `n8n/`-katalogen:
+
+### 1. Text Input Workflow (Obligatorisk)
+**Fil**: `n8n/wyoming_satellite_llm_reply.json`
 - Importera i n8n (Menu → Import from File).
 - Ändra URL i noden **HTTP Request → LLM** till din LLM-endpoint.
-- Flödet exponerar webhooks:
-  - `/webhook/text-input` för textfrågor
-  - `/webhook/audio-input` för ljudfiler (om mode: upload)
+- Exponerar webhook: `/webhook/text-input` för textfrågor
+- Används av både `main.py` (mode: local) och `web.py`
+
+### 2. Audio Input Workflow (Valfri - endast för mode: upload)
+**Fil**: `n8n/audio_input_llm_reply.json`
+- Importera i n8n om du vill använda `mode: upload` i STT-konfigurationen.
+- Ändra URL för **HTTP Request → STT** till din Whisper/STT-server.
+- Ändra URL för **HTTP Request → LLM** till din LLM-endpoint.
+- Exponerar webhook: `/webhook/audio-input` för ljuduppladdning
+- Används av `main.py` när `stt.mode: upload`
+
+**OBS**: Om du får 404-fel på webhook-endpoints, kontrollera att du har importerat rätt workflow(s) i n8n och att webhook-paths matchar.
 
 
 
