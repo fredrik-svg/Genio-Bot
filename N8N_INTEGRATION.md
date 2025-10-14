@@ -62,7 +62,11 @@ The setup wizard creates a persistent configuration file:
 }
 ```
 
-**Note**: API keys are stored locally and should be kept secure. Consider using environment variables for production deployments.
+**Important Notes**: 
+- The `api_key` is used for authenticating with your n8n server
+- The `openai_api_key` is stored for verification purposes only - **it is NOT sent to n8n**
+- **OpenAI API key must be configured separately in n8n Credentials** (see [OPENAI_SETUP.md](OPENAI_SETUP.md))
+- Genio-Bot only sends audio files to n8n; n8n handles the OpenAI Whisper API calls using its own credentials
 
 ### config.yaml (Legacy)
 

@@ -41,8 +41,8 @@ class N8nConfig:
             "n8n_url": "",
             "text_webhook": "/webhook/text-input",
             "audio_webhook": "/webhook/audio-input",
-            "api_key": "",
-            "openai_api_key": "",
+            "api_key": "",  # Used for n8n authentication
+            "openai_api_key": "",  # Stored for verification only; must be configured in n8n separately
             "timeout_s": 30,
             "configured": False
         }

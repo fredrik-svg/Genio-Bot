@@ -261,19 +261,23 @@ Färdiga n8n-exporter finns i `n8n/`-katalogen:
 **Fil**: `n8n/audio_input_llm_reply.json`
 - Importera i n8n om du vill använda `mode: upload` i STT-konfigurationen.
 - **Använder OpenAI Whisper API** för ljudtranskribering
-- Konfigurera OpenAI API-nyckel i n8n credentials (HTTP Header Auth med `Authorization: Bearer sk-...`)
+- **VIKTIGT**: Konfigurera OpenAI API-nyckel i **n8n credentials** (HTTP Header Auth med `Authorization: Bearer sk-...`)
+  - OpenAI-nyckeln konfigureras i n8n, inte i Genio-Bot
+  - Genio-Bot skickar endast ljudfiler till n8n
+  - n8n hanterar kommunikationen med OpenAI Whisper API
 - Ändra URL för **HTTP Request → AI Agent (LLM)** till din LLM-endpoint.
 - Exponerar webhook: `/webhook/audio-input` för ljuduppladdning
 - Används av `main.py` när `stt.mode: upload`
 
 **Flöde:**
 1. Raspberry PI skickar ljudfil till n8n webhook
-2. OpenAI Whisper API transkriberar ljudet till text
-3. AI Agent (LLM) hanterar frågan
-4. Svar skickas tillbaka till Raspberry PI
+2. n8n skickar ljudfil till OpenAI Whisper API (använder n8n's konfigurerade API-nyckel)
+3. OpenAI Whisper API transkriberar ljudet till text
+4. AI Agent (LLM) hanterar frågan
+5. Svar skickas tillbaka till Raspberry PI
 
 **OBS**: 
-- Kräver OpenAI API-nyckel för Whisper transkribering
+- Kräver OpenAI API-nyckel för Whisper transkribering (konfigureras i n8n, inte i Genio-Bot)
 - Om du får 404-fel på webhook-endpoints, kontrollera att du har importerat rätt workflow(s) i n8n och att webhook-paths matchar.
 
 

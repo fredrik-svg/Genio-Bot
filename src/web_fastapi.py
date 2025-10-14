@@ -209,7 +209,12 @@ async def verify_webhook(verify: VerifyRequest):
 
 @app.post("/api/verify-apikey")
 async def verify_apikey(setup: SetupRequest):
-    """Verify OpenAI API key (for audio workflow)."""
+    """Verify OpenAI API key (for audio workflow).
+    
+    Note: This endpoint only verifies the key is valid. The key must be configured
+    separately in n8n Credentials. Genio-Bot does NOT send the OpenAI key to n8n;
+    it only sends audio files, and n8n handles the OpenAI API communication.
+    """
     if not setup.openai_api_key:
         return {
             "success": True,
