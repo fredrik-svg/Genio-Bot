@@ -498,6 +498,11 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({url: n8nUrl, webhook_path: textWebhook})
                 });
+                
+                if (!connectivityResult.ok) {
+                    throw new Error(`HTTP ${connectivityResult.status}: ${connectivityResult.statusText}`);
+                }
+                
                 const connectivityData = await connectivityResult.json();
                 
                 if (connectivityData.success || connectivityData.reachable) {
@@ -508,40 +513,52 @@
                     document.getElementById('webhookIcon').textContent = '⏳';
                     document.getElementById('webhookStatus').textContent = 'Testar webhook...';
                     
-                    const webhookResult = await fetch('/api/verify-webhook', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({url: n8nUrl, webhook_path: textWebhook})
-                    });
-                    const webhookData = await webhookResult.json();
-                    
-                    if (webhookData.success) {
-                        document.getElementById('webhookIcon').textContent = '✅';
-                        document.getElementById('webhookStatus').textContent = webhookData.message;
-                        verificationPassed = true;
-                        document.getElementById('continueBtn').disabled = false;
-                        showStatus('Verifiering lyckades!', 'success');
-                    } else {
+                    try {
+                        const webhookResult = await fetch('/api/verify-webhook', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({url: n8nUrl, webhook_path: textWebhook})
+                        });
+                        
+                        if (!webhookResult.ok) {
+                            throw new Error(`HTTP ${webhookResult.status}: ${webhookResult.statusText}`);
+                        }
+                        
+                        const webhookData = await webhookResult.json();
+                        
+                        if (webhookData.success) {
+                            document.getElementById('webhookIcon').textContent = '✅';
+                            document.getElementById('webhookStatus').textContent = webhookData.message;
+                            verificationPassed = true;
+                            document.getElementById('continueBtn').disabled = false;
+                            showStatus('Verifiering lyckades!', 'success');
+                        } else {
+                            document.getElementById('webhookIcon').textContent = '❌';
+                            document.getElementById('webhookStatus').textContent = webhookData.message;
+                            document.getElementById('retryBtn').style.display = 'inline-block';
+                            showStatus('Webhook-verifiering misslyckades. Se instruktioner nedan.', 'error');
+                        }
+                    } catch (webhookError) {
                         document.getElementById('webhookIcon').textContent = '❌';
-                        document.getElementById('webhookStatus').textContent = webhookData.message;
+                        document.getElementById('webhookStatus').textContent = 'Webhook-test misslyckades: ' + webhookError.message;
                         document.getElementById('retryBtn').style.display = 'inline-block';
-                        showStatus('Webhook-verifiering misslyckades. Se instruktioner nedan.', 'error');
+                        showStatus('Webhook-test misslyckades: ' + webhookError.message, 'error');
                     }
                 } else {
                     document.getElementById('connectivityIcon').textContent = '❌';
                     document.getElementById('connectivityStatus').textContent = connectivityData.message;
                     document.getElementById('webhookIcon').textContent = '⏸️';
-                    document.getElementById('webhookStatus').textContent = 'Hoppades över';
+                    document.getElementById('webhookStatus').textContent = 'Hoppades över (ingen anslutning)';
                     document.getElementById('retryBtn').style.display = 'inline-block';
-                    showStatus('Anslutningstest misslyckades', 'error');
+                    showStatus('Anslutningstest misslyckades: ' + connectivityData.message, 'error');
                 }
             } catch (error) {
                 document.getElementById('connectivityIcon').textContent = '❌';
-                document.getElementById('connectivityStatus').textContent = 'Fel: ' + error.message;
+                document.getElementById('connectivityStatus').textContent = 'Anslutningsfel: ' + error.message;
                 document.getElementById('webhookIcon').textContent = '⏸️';
                 document.getElementById('webhookStatus').textContent = 'Hoppades över (anslutningsfel)';
                 document.getElementById('retryBtn').style.display = 'inline-block';
-                showStatus('Verifiering misslyckades', 'error');
+                showStatus('Anslutningstest misslyckades: ' + error.message, 'error');
             }
         }
         
