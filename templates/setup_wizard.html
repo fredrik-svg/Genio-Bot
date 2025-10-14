@@ -538,6 +538,8 @@
             } catch (error) {
                 document.getElementById('connectivityIcon').textContent = '❌';
                 document.getElementById('connectivityStatus').textContent = 'Fel: ' + error.message;
+                document.getElementById('webhookIcon').textContent = '⏸️';
+                document.getElementById('webhookStatus').textContent = 'Hoppades över (anslutningsfel)';
                 document.getElementById('retryBtn').style.display = 'inline-block';
                 showStatus('Verifiering misslyckades', 'error');
             }
