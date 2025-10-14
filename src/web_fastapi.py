@@ -122,10 +122,23 @@ async def verify_connectivity(verify: VerifyRequest):
             except httpx.HTTPStatusError:
                 response = await client.get(full_url)
             
-            # Consider 404, 405 (Method Not Allowed), and 2xx as success
-            # 404 means the server is reachable but webhook might not be configured yet
-            # 405 means the endpoint exists but doesn't accept HEAD/GET (webhook might need POST)
-            if response.status_code in [200, 404, 405] or (200 <= response.status_code < 300):
+            # Handle different status codes
+            if response.status_code == 404:
+                # 404 means the server is reachable but webhook doesn't exist
+                # Check if using test webhook URL
+                url_warning = ""
+                if "/webhook-test/" in verify.webhook_path:
+                    url_warning = " Använd production URL (/webhook/text-input) istället för test-URL."
+                
+                return {
+                    "success": False,
+                    "reachable": True,
+                    "status_code": response.status_code,
+                    "message": f"Webhook finns inte (404). Importera workflow i n8n och aktivera det.{url_warning}"
+                }
+            elif response.status_code == 405 or (200 <= response.status_code < 300):
+                # 405 means endpoint exists but doesn't accept HEAD/GET (webhook needs POST)
+                # 2xx means the server responded successfully
                 return {
                     "success": True, 
                     "reachable": True,
