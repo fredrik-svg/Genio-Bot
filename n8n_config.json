@@ -1,0 +1,9 @@
+{
+  "n8n_url": "https://test.example.com",
+  "text_webhook": "/webhook/text-input",
+  "audio_webhook": "/webhook/audio-input",
+  "api_key": "",
+  "openai_api_key": "",
+  "timeout_s": 30,
+  "configured": true
+}

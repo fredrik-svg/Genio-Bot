@@ -29,7 +29,9 @@ n8n_config: Optional[N8nConfig] = None
 config: dict = {}
 
 # Templates
-templates = Jinja2Templates(directory="../templates")
+import os
+template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
+templates = Jinja2Templates(directory=template_dir)
 
 # Pydantic models for request/response validation
 class AskRequest(BaseModel):
