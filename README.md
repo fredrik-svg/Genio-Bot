@@ -17,6 +17,7 @@ raspi-satellite-1/
 ├─ LICENSE
 ├─ .env.example
 ├─ config.example.yaml                 # exempel på konfiguration
+├─ n8n_config.example.json             # exempel på n8n-konfiguration
 ├─ config.docker.yaml                  # konfiguration för docker-compose
 ├─ requirements.txt
 ├─ docker-compose.yml                  # satellit med lokal STT

@@ -13,6 +13,7 @@ __pycache__/
 
 # Configuration files (users should copy from examples)
 config.yaml
+n8n_config.json
 
 # IDE
 .vscode/
