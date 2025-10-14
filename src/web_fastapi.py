@@ -143,13 +143,39 @@ async def verify_connectivity(verify: VerifyRequest):
         return {
             "success": False,
             "reachable": False,
-            "message": "Connection timeout - server not reachable"
+            "message": "Timeout: Kontrollera URL och nätverksanslutning"
         }
-    except Exception as e:
+    except httpx.ConnectError as e:
+        error_msg = str(e).lower()
+        # Provide user-friendly error messages for common connection issues
+        if "errno -5" in error_msg or "no address associated" in error_msg or "name or service not known" in error_msg:
+            message = "Kan inte hitta server - kontrollera URL"
+        elif "connection refused" in error_msg or "errno 111" in error_msg:
+            message = "Anslutning nekad - kontrollera att servern är igång"
+        elif "network is unreachable" in error_msg:
+            message = "Nätverket är inte nåbart - kontrollera nätverksanslutning"
+        else:
+            message = f"Kan inte ansluta till server - kontrollera URL och nätverksanslutning"
+        
         return {
             "success": False,
             "reachable": False,
-            "message": f"Connection failed: {str(e)}"
+            "message": message
+        }
+    except Exception as e:
+        error_msg = str(e)
+        # Provide more helpful error messages for common issues
+        if "ssl" in error_msg.lower():
+            message = f"SSL-certifikatfel - kontrollera att URL:en är korrekt"
+        elif "name or service not known" in error_msg.lower() or "nodename nor servname" in error_msg.lower():
+            message = "Kan inte hitta server - kontrollera URL"
+        else:
+            message = f"Anslutningsfel: {error_msg}"
+        
+        return {
+            "success": False,
+            "reachable": False,
+            "message": message
         }
 
 @app.post("/api/verify-webhook")
@@ -172,39 +198,64 @@ async def verify_webhook(verify: VerifyRequest):
                     if "reply" in data or "response" in data:
                         return {
                             "success": True,
-                            "message": "Webhook is properly configured",
+                            "message": "Webhook fungerar korrekt",
                             "response": data
                         }
                     else:
                         return {
                             "success": False,
-                            "message": "Webhook responded but format is unexpected",
+                            "message": "Webhook svarade men formatet är oväntat",
                             "response": data
                         }
                 except:
                     return {
                         "success": False,
-                        "message": "Webhook responded but not with valid JSON"
+                        "message": "Webhook svarade men inte med giltig JSON"
                     }
             elif response.status_code == 404:
                 return {
                     "success": False,
-                    "message": "Webhook not found (404). Import the workflow in n8n and activate it."
+                    "message": "Webhook finns inte (404). Importera workflow i n8n och aktivera det."
+                }
+            elif response.status_code == 401 or response.status_code == 403:
+                return {
+                    "success": False,
+                    "message": f"Autentiseringsfel ({response.status_code}). Kontrollera API-nyckel."
                 }
             else:
                 return {
                     "success": False,
-                    "message": f"Webhook returned status {response.status_code}"
+                    "message": f"Webhook returnerade status {response.status_code}"
                 }
     except httpx.TimeoutException:
         return {
             "success": False,
-            "message": "Webhook request timeout"
+            "message": "Timeout: Webhook svarar inte (kontrollera att workflow är aktiverat i n8n)"
         }
-    except Exception as e:
+    except httpx.ConnectError as e:
+        error_msg = str(e).lower()
+        # Provide user-friendly error messages
+        if "errno -5" in error_msg or "no address associated" in error_msg or "name or service not known" in error_msg:
+            message = "Kan inte hitta server - kontrollera URL"
+        elif "connection refused" in error_msg or "errno 111" in error_msg:
+            message = "Anslutning nekad - kontrollera att n8n-servern är igång"
+        else:
+            message = "Kan inte ansluta till webhook - kontrollera URL och nätverksanslutning"
+        
         return {
             "success": False,
-            "message": f"Webhook verification failed: {str(e)}"
+            "message": message
+        }
+    except Exception as e:
+        error_msg = str(e)
+        if "ssl" in error_msg.lower():
+            message = "SSL-certifikatfel - kontrollera att URL:en är korrekt"
+        else:
+            message = f"Webhook-verifiering misslyckades: {error_msg}"
+        
+        return {
+            "success": False,
+            "message": message
         }
 
 @app.post("/api/verify-apikey")
