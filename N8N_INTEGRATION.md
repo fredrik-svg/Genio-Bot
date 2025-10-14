@@ -215,13 +215,23 @@ Test connection to n8n server.
 }
 ```
 
-**Response**:
+**Response (success - server reachable with 2xx or 405)**:
 ```json
 {
   "success": true,
   "reachable": true,
-  "status_code": 404,
+  "status_code": 405,
   "message": "n8n server is reachable"
+}
+```
+
+**Response (failure - webhook not found 404)**:
+```json
+{
+  "success": false,
+  "reachable": true,
+  "status_code": 404,
+  "message": "Webhook finns inte (404). Importera workflow i n8n och aktivera det."
 }
 ```
 
