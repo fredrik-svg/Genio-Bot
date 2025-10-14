@@ -5,6 +5,7 @@ Raspberry Pi 5 “satellit”-klient för röststyrning med **Whisper STT** och 
 > **Mål**: Spela in tal → transkribera till text (Whisper STT) → skicka till central LLM via n8n → få textsvar → läsa upp svaret lokalt med Piper.
 
 📚 **Dokumentation:**
+- [N8N_INTEGRATION.md](N8N_INTEGRATION.md) - **n8n integration guide med setup wizard** ⭐ **NY**
 - [MIGRATION.md](MIGRATION.md) - Migrering från Wyoming till Whisper
 - [USAGE_EXAMPLES.md](USAGE_EXAMPLES.md) - Praktiska användningsexempel
 - [OPENAI_SETUP.md](OPENAI_SETUP.md) - OpenAI Whisper API integration (för audio upload)
@@ -27,7 +28,9 @@ raspi-satellite-1/
    ├─ stt_piper.py
    ├─ tts.py
    ├─ client.py
-   ├─ web.py
+   ├─ web.py                    # Flask-based web (legacy)
+   ├─ web_fastapi.py            # FastAPI web with setup wizard (new)
+   ├─ n8n_config.py             # n8n configuration management
    └─ util.py
 ```
 
@@ -129,14 +132,30 @@ python src/main.py --config config.yaml
 **Obs**: Första gången kan det ta lite tid när Whisper-modellen laddas ned.
 
 ### Web Frontend
-Om du vill använda en textbaserad frontend istället för röstinmatning:
 
+#### Option 1: FastAPI with Setup Wizard (Rekommenderat)
+```bash
+source .venv/bin/activate
+python src/web_fastapi.py --config config.yaml
+```
+
+**Ny funktionalitet:**
+- 🚀 Browser-baserad installationsguide på `http://localhost:5000/setup`
+- ✅ Automatisk verifiering av n8n-anslutning och webhooks
+- 🔑 API-nyckel verifiering för OpenAI
+- 📝 Persistent konfigurationshantering (`n8n_config.json`)
+- 🔔 Webhook-notiser från n8n workflows
+- ⚡ Async HTTP med httpx för bättre prestanda
+
+Se [N8N_INTEGRATION.md](N8N_INTEGRATION.md) för fullständig guide.
+
+#### Option 2: Flask (Legacy)
 ```bash
 source .venv/bin/activate
 python src/web.py --config config.yaml
 ```
 
-Detta startar en webbserver på `http://localhost:5000` där du kan ställa frågor i textform direkt till backend-flödet. Perfekt för testning eller när du inte har tillgång till mikrofon/högtalare.
+Detta startar en enklare webbserver på `http://localhost:5000` där du kan ställa frågor i textform direkt till backend-flödet. Perfekt för testning eller när du inte har tillgång till mikrofon/högtalare.
 
 **Observera**: Web-frontend kräver endast backend-konfiguration och hoppar över STT/TTS/audio-komponenterna.
 
