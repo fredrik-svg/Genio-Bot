@@ -4,7 +4,9 @@ webrtcvad-wheels
 numpy
 soundfile
 requests
+httpx
 # STT using faster-whisper (more efficient than openai-whisper)
 faster-whisper
 # Web frontend
-flask
+fastapi
+uvicorn[standard]
