@@ -155,7 +155,9 @@ Nya webhooks:
    - Uppdatera LLM-URL i båda workflows
    - För audio workflow: 
      - Använder nu **OpenAI Whisper API** för transkribering
-     - Konfigurera OpenAI API-nyckel i n8n credentials (HTTP Header Auth)
+     - **VIKTIGT**: Konfigurera OpenAI API-nyckel i **n8n credentials** (HTTP Header Auth)
+       - Nyckeln konfigureras i n8n, inte i Genio-Bot
+       - Se [OPENAI_SETUP.md](OPENAI_SETUP.md) för detaljerade instruktioner
      - Uppdatera AI Agent (LLM) URL
 
 **OBS**: 

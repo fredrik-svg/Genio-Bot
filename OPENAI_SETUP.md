@@ -4,6 +4,8 @@
 
 n8n-flödet för audio upload (`n8n/audio_input_llm_reply.json`) använder nu **OpenAI Whisper API** för att transkribera ljudfiler till text. Detta ger hög kvalitet och pålitlig transkribering utan att behöva hantera egen STT-server.
 
+**VIKTIGT**: OpenAI API-nyckeln konfigureras i **n8n's Credentials**, inte i Genio-Bot-applikationen. Genio-Bot skickar endast ljudfiler till n8n, och n8n hanterar själv kommunikationen med OpenAI Whisper API.
+
 ## Flödesdiagram
 
 ```
@@ -23,8 +25,19 @@ Raspberry PI → n8n Webhook → OpenAI Whisper API → AI Agent (LLM) → Svar 
 ## Krav
 
 - n8n installerat och igång
-- OpenAI API-nyckel (https://platform.openai.com/api-keys)
+- OpenAI API-nyckel (https://platform.openai.com/api-keys) - **konfigureras i n8n**
 - AI Agent/LLM-endpoint för att hantera frågor
+
+### Varför behövs OpenAI-nyckeln i n8n?
+
+När du använder audio upload-läge (`stt.mode: upload`):
+1. Genio-Bot spelar in ljud och skickar det till n8n's webhook (`/webhook/audio-input`)
+2. **n8n** tar emot ljudfilen och skickar den till OpenAI Whisper API för transkribering
+3. n8n använder sin egen konfigurerade OpenAI API-nyckel (från n8n Credentials)
+4. OpenAI Whisper returnerar texten till n8n
+5. n8n skickar texten vidare till din LLM och returnerar svaret till Genio-Bot
+
+**Genio-Bot-applikationen skickar aldrig direkt till OpenAI** - all kommunikation med OpenAI sker via n8n.
 
 ## Installation
 

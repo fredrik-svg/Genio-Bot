@@ -378,9 +378,13 @@
             </div>
             
             <div class="form-group">
-                <label for="openaiApiKey">OpenAI API-nyckel <span class="optional">(valfri)</span></label>
+                <label for="openaiApiKey">OpenAI API-nyckel <span class="optional">(valfri - endast för verifiering)</span></label>
                 <input type="password" id="openaiApiKey" placeholder="sk-...">
-                <div class="help-text">Endast nödvändig för audio upload-läge med Whisper API</div>
+                <div class="help-text">
+                    <strong>OBS:</strong> OpenAI-nyckeln måste konfigureras i <strong>n8n's Credentials</strong> (inte här).<br>
+                    Detta fält används endast för att verifiera att din nyckel är giltig.<br>
+                    Se <a href="https://github.com/fredrik-svg/Genio-Bot/blob/main/OPENAI_SETUP.md" target="_blank">OPENAI_SETUP.md</a> för instruktioner.
+                </div>
             </div>
             
             <button class="btn-secondary" style="margin-bottom: 20px;" onclick="verifyApiKey()">
