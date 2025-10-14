@@ -19,16 +19,31 @@ class BackendClient:
             r.raise_for_status()
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 404:
+                # Check if using test webhook URL
+                url_warning = ""
+                if "/webhook-test/" in self.url:
+                    url_warning = (
+                        f"\n"
+                        f"⚠️  VARNING: Du använder n8n's TEST-URL (/webhook-test/...)\n"
+                        f"   Test-URL fungerar ENDAST vid testning i n8n UI!\n"
+                        f"   Lösning: Använd production URL '/webhook/text-input' istället\n"
+                        f"   och aktivera workflow i n8n.\n"
+                    )
+                
                 error_msg = (
                     f"❌ 404 Not Found: {self.url}\n"
+                    f"{url_warning}"
                     f"\n"
                     f"Möjliga orsaker:\n"
                     f"1. n8n-workflow inte importerat/aktiverat\n"
                     f"   → Importera 'n8n/wyoming_satellite_llm_reply.json' i n8n\n"
-                    f"   → Aktivera workflow i n8n\n"
-                    f"2. Fel URL i config.yaml\n"
+                    f"   → AKTIVERA workflow i n8n (klicka 'Active' toggle)\n"
+                    f"2. Använder test-URL istället för production-URL\n"
+                    f"   → Använd '/webhook/text-input' (INTE '/webhook-test/text-input')\n"
+                    f"   → Test-URL fungerar endast vid testning i n8n UI\n"
+                    f"3. Fel URL i config.yaml\n"
                     f"   → Kontrollera att 'backend.n8n_url' är korrekt\n"
-                    f"3. Gammal workflow används\n"
+                    f"4. Gammal workflow används\n"
                     f"   → Den nya webhook-path är '/webhook/text-input'\n"
                     f"\n"
                     f"Se README.md avsnitt '404-fel' för mer hjälp."
@@ -65,17 +80,32 @@ class BackendClient:
                     r.raise_for_status()
                 except requests.exceptions.HTTPError as e:
                     if e.response.status_code == 404:
+                        # Check if using test webhook URL
+                        url_warning = ""
+                        if "/webhook-test/" in self.audio_url:
+                            url_warning = (
+                                f"\n"
+                                f"⚠️  VARNING: Du använder n8n's TEST-URL (/webhook-test/...)\n"
+                                f"   Test-URL fungerar ENDAST vid testning i n8n UI!\n"
+                                f"   Lösning: Använd production URL '/webhook/audio-input' istället\n"
+                                f"   och aktivera workflow i n8n.\n"
+                            )
+                        
                         error_msg = (
                             f"❌ 404 Not Found: {self.audio_url}\n"
+                            f"{url_warning}"
                             f"\n"
                             f"Möjliga orsaker:\n"
                             f"1. n8n audio workflow inte importerat/aktiverat\n"
                             f"   → Importera 'n8n/audio_input_llm_reply.json' i n8n\n"
-                            f"   → Aktivera workflow i n8n\n"
+                            f"   → AKTIVERA workflow i n8n (klicka 'Active' toggle)\n"
                             f"   → Konfigurera OpenAI API-nyckel för Whisper\n"
-                            f"2. Fel URL i config.yaml\n"
+                            f"2. Använder test-URL istället för production-URL\n"
+                            f"   → Använd '/webhook/audio-input' (INTE '/webhook-test/audio-input')\n"
+                            f"   → Test-URL fungerar endast vid testning i n8n UI\n"
+                            f"3. Fel URL i config.yaml\n"
                             f"   → Kontrollera att 'backend.audio_url' är korrekt\n"
-                            f"3. mode: upload kräver audio workflow\n"
+                            f"4. mode: upload kräver audio workflow\n"
                             f"   → Den nya webhook-path är '/webhook/audio-input'\n"
                             f"\n"
                             f"Se README.md och MIGRATION.md för mer hjälp."

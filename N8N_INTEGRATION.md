@@ -332,9 +332,35 @@ async with httpx.AsyncClient(timeout=30.0) as client:
 **Problem**: Webhook returns 404
 
 **Solutions**:
-1. Verify workflow is imported and activated in n8n
-2. Check webhook path matches configuration
-3. Ensure n8n is accessible from Genio-Bot server
+1. **Verify workflow is imported and ACTIVATED in n8n**
+   - Click the "Active" toggle to activate the workflow
+   - Test and production URLs are different (see below)
+
+2. **Check webhook path matches configuration**
+   - Correct production URL: `/webhook/text-input` or `/webhook/audio-input`
+   - Do NOT use test URL: `/webhook-test/...` (only works during testing in n8n UI)
+
+3. **Ensure n8n is accessible from Genio-Bot server**
+   - Test with curl or browser
+
+4. **Understanding n8n Webhook URLs**:
+   - **Test URL**: `/webhook-test/text-input`
+     - Only active when you click "Listen for test event" or "Execute workflow" in n8n UI
+     - Used for testing workflows during development
+     - NOT suitable for production use
+   - **Production URL**: `/webhook/text-input`
+     - Active when workflow is properly activated (Active toggle ON)
+     - Used for real production traffic
+     - **Always use this URL in Genio-Bot configuration**
+
+**Example of correct configuration**:
+```json
+{
+  "n8n_url": "https://ai.genio-bot.com",
+  "text_webhook": "/webhook/text-input",    // NOT /webhook-test/text-input
+  "audio_webhook": "/webhook/audio-input"    // NOT /webhook-test/audio-input
+}
+```
 
 ### Connection Timeout
 

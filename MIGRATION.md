@@ -140,6 +140,12 @@ Nya webhooks:
 - **Text**: `/webhook/text-input` (för textfrågor)
 - **Audio**: `/webhook/audio-input` (för ljudfiler i upload-läge)
 
+**VIKTIGT om webhook-URLs**:
+- Använd ALLTID production URL: `/webhook/text-input`
+- Använd INTE test URL: `/webhook-test/text-input`
+- n8n's test-URL fungerar endast vid testning i n8n UI
+- Aktivera workflow i n8n för att production URL ska bli tillgänglig
+
 ### Hur uppdatera n8n
 
 1. **Ta bort gamla workflow** (om du har den):

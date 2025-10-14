@@ -312,13 +312,20 @@
             <div class="form-group">
                 <label for="textWebhook">Text Webhook Path</label>
                 <input type="text" id="textWebhook" value="/webhook/text-input">
-                <div class="help-text">Path för text input webhook (används för textfrågor)</div>
+                <div class="help-text">
+                    Path för text input webhook (används för textfrågor)<br>
+                    <strong>OBS:</strong> Använd <code>/webhook/text-input</code> (INTE <code>/webhook-test/text-input</code>).<br>
+                    n8n's test-URL fungerar endast vid testning i n8n UI. Aktivera workflow för production-URL.
+                </div>
             </div>
             
             <div class="form-group">
                 <label for="audioWebhook">Audio Webhook Path <span class="optional">(valfri)</span></label>
                 <input type="text" id="audioWebhook" value="/webhook/audio-input">
-                <div class="help-text">Path för audio webhook (används endast i upload-läge)</div>
+                <div class="help-text">
+                    Path för audio webhook (används endast i upload-läge)<br>
+                    Använd <code>/webhook/audio-input</code> (production URL, INTE test-URL)
+                </div>
             </div>
             
             <div class="form-group">

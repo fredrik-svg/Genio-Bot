@@ -230,17 +230,24 @@ Om lokal STT är långsam, prova:
 
 **Möjliga orsaker och lösningar**:
 
-1. **n8n-workflow inte importerat**
+1. **n8n-workflow inte importerat eller INTE AKTIVERAT**
    - Importera `n8n/wyoming_satellite_llm_reply.json` i n8n (Menu → Import from File)
    - För `mode: upload`, importera även `n8n/audio_input_llm_reply.json`
-   - Aktivera workflow i n8n
+   - **VIKTIGT**: Aktivera workflow i n8n (klicka på "Active" toggle)
 
-2. **Gammal workflow används**
+2. **Använder test-URL istället för production-URL**
+   - **n8n har två typer av webhook-URLs**:
+     - **Test URL**: `/webhook-test/text-input` - Fungerar ENDAST när du testar i n8n UI
+     - **Production URL**: `/webhook/text-input` - Fungerar när workflow är aktiverat
+   - **Lösning**: Använd ALLTID production URL (`/webhook/text-input`) i Genio-Bot
+   - Aktivera workflow i n8n så att production URL blir tillgänglig
+
+3. **Gammal workflow används**
    - Den gamla webhooks var `/webhook/wyoming-input`
    - Uppdatera till den nya workflown som använder `/webhook/text-input`
    - Se MIGRATION.md för mer information
 
-3. **Fel URL i config.yaml**
+4. **Fel URL i config.yaml**
    - Kontrollera att `backend.n8n_url` pekar på rätt server
    - Verifiera att servern är tillgänglig (testa med curl eller webbläsare)
 
