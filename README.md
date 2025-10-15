@@ -50,7 +50,7 @@ Kör applikationen första gången för att starta guiden:
 python -m src.app --config config.yaml
 ```
 
-Guiden består av tre steg:
+Om `config.yaml` inte finns körs konfigurationsguiden automatiskt. Guiden består av tre steg:
 
 1. Ange adressen till n8n-servern (förifylld med `https://ai.genio-bot.com`).
 2. Välj vilken webhook-sökväg i n8n som ska ta emot texten.
@@ -61,9 +61,15 @@ Guiden består av tre steg:
 
 Alla val sparas i `config.yaml`.
 
+För att köra konfigurationsguiden igen, använd flaggan `--configure`:
+
+```bash
+python -m src.app --configure
+```
+
 ## ▶️ Användning
 
-Efter att guiden är klar fortsätter programmet automatiskt att lyssna efter tal:
+Om du redan har en giltig konfiguration startar programmet direkt och lyssnar efter tal:
 
 1. Tala i mikrofonen – röstaktiviteten klipper automatiskt ut ett yttrande.
 2. Texten transkriberas lokalt.
