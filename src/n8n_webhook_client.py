@@ -24,15 +24,29 @@ class N8nWebhookClient:
         }
         if device:
             payload["device"] = device
-        response = httpx.post(
-            self.config.n8n.question_url(),
-            json=payload,
-            timeout=self.config.app.reply_timeout_s,
-            follow_redirects=True,
-        )
-        response.raise_for_status()
+        try:
+            response = httpx.post(
+                self.config.n8n.question_url(),
+                json=payload,
+                timeout=self.config.app.reply_timeout_s,
+                follow_redirects=True,
+            )
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:  # pragma: no cover - network failure
+            self.broker.discard(conversation_id)
+            status = exc.response.status_code
+            raise RuntimeError(
+                "n8n-webhooken svarade med felkod "
+                f"{status}. Kontrollera att URL och webhook-path stämmer."
+            ) from exc
+        except httpx.RequestError as exc:  # pragma: no cover - network failure
+            self.broker.discard(conversation_id)
+            raise RuntimeError(
+                "Kunde inte kontakta n8n-webhooken. Kontrollera nätverk och URL."
+            ) from exc
         reply = pending.wait(self.config.app.reply_timeout_s)
         if reply is None:
+            self.broker.discard(conversation_id)
             raise TimeoutError(
                 "Ingen respons mottagen från n8n-webhooken inom "
                 f"{self.config.app.reply_timeout_s} sekunder."

@@ -69,7 +69,7 @@ def main() -> None:
             print(f"→ Skickar till n8n: {text}")
             try:
                 reply = client.ask(text, device=device_name)
-            except TimeoutError as exc:
+            except (TimeoutError, RuntimeError) as exc:
                 print(f"⚠️  {exc}")
                 continue
             print(f"← Svar från n8n: {reply}")
