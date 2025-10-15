@@ -69,3 +69,84 @@ class N8nWebhookClient:
 
     def handle_reply(self, conversation_id: str, reply: str) -> bool:
         return self.broker.resolve(conversation_id, reply)
+
+    def diagnose_connection(self, test_text: str = "diagnostic ping", device: str | None = None) -> dict:
+        """Perform basic connectivity checks against the n8n server.
+
+        The diagnostics are split into two steps so that it is easier to
+        understand where a failure occurs when the webhook responds with a
+        404-status. The returned dictionary always contains two keys:
+
+        ``server``
+            Result of pinging the base server URL with a GET request.
+        ``webhook``
+            Result of posting a minimal payload to the question webhook.
+
+        Both keys map to dictionaries containing ``ok`` (bool) as well as
+        contextual data such as status codes or error messages.
+        """
+
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 "
+                "Safari/605.1.15"
+            ),
+            "Accept": "application/json, */*;q=0.1",
+        }
+
+        diagnostics: dict[str, dict[str, object]] = {
+            "server": {"ok": False},
+            "webhook": {"ok": False},
+        }
+
+        try:
+            response = httpx.get(
+                self.config.n8n.server_url,
+                timeout=self.config.app.reply_timeout_s,
+                follow_redirects=True,
+                headers=headers,
+            )
+            diagnostics["server"].update(
+                {
+                    "ok": response.is_success,
+                    "status_code": response.status_code,
+                    "url": str(response.url),
+                }
+            )
+        except httpx.RequestError as exc:  # pragma: no cover - network failure
+            diagnostics["server"].update({"error": str(exc)})
+
+        conversation_id = str(uuid.uuid4())
+        payload = {
+            "text": test_text,
+            "conversation_id": conversation_id,
+            "callback_url": self.config.app.reply_webhook_url(),
+        }
+        if device:
+            payload["device"] = device
+
+        _ = self.broker.create(conversation_id)
+        try:
+            try:
+                response = httpx.post(
+                    self.config.n8n.question_url(),
+                    json=payload,
+                    timeout=self.config.app.reply_timeout_s,
+                    follow_redirects=True,
+                    headers=headers,
+                )
+                diagnostics["webhook"].update(
+                    {
+                        "ok": response.is_success,
+                        "status_code": response.status_code,
+                        "url": str(response.url),
+                        "response_body": response.text,
+                    }
+                )
+            except httpx.RequestError as exc:  # pragma: no cover - network failure
+                diagnostics["webhook"].update({"error": str(exc)})
+        finally:
+            self.broker.discard(conversation_id)
+
+        return diagnostics
