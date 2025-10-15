@@ -30,6 +30,12 @@ class BackendClient:
                         f"   och aktivera workflow i n8n.\n"
                     )
                 
+                response_hint = ""
+                if e.response.text:
+                    body = e.response.text.strip()
+                    if body:
+                        response_hint = f"\nServer-svar: {body}"
+
                 error_msg = (
                     f"❌ 404 Not Found: {self.url}\n"
                     f"{url_warning}"
@@ -47,6 +53,7 @@ class BackendClient:
                     f"   → Den nya webhook-path är '/webhook/text-input'\n"
                     f"\n"
                     f"Se README.md avsnitt '404-fel' för mer hjälp."
+                    f"{response_hint}"
                 )
                 raise requests.exceptions.HTTPError(error_msg, response=e.response) from e
             raise
@@ -91,6 +98,12 @@ class BackendClient:
                                 f"   och aktivera workflow i n8n.\n"
                             )
                         
+                        response_hint = ""
+                        if e.response.text:
+                            body = e.response.text.strip()
+                            if body:
+                                response_hint = f"\nServer-svar: {body}"
+
                         error_msg = (
                             f"❌ 404 Not Found: {self.audio_url}\n"
                             f"{url_warning}"
@@ -109,6 +122,7 @@ class BackendClient:
                             f"   → Den nya webhook-path är '/webhook/audio-input'\n"
                             f"\n"
                             f"Se README.md och MIGRATION.md för mer hjälp."
+                            f"{response_hint}"
                         )
                         raise requests.exceptions.HTTPError(error_msg, response=e.response) from e
                     raise
