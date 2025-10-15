@@ -24,12 +24,26 @@ class N8nWebhookClient:
         }
         if device:
             payload["device"] = device
+        headers = {
+            # Cloudflare sometimes blocks generic HTTP clients. Spoof a
+            # mainstream browser user agent and keep the request behaviour
+            # consistent with manual tests performed via the browser/curl.
+            "User-Agent": (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 "
+                "Safari/605.1.15"
+            ),
+            # Accept JSON (n8n returns JSON here) while still allowing fallbacks
+            # similar to the browser behaviour.
+            "Accept": "application/json, */*;q=0.1",
+        }
         try:
             response = httpx.post(
                 self.config.n8n.question_url(),
                 json=payload,
                 timeout=self.config.app.reply_timeout_s,
                 follow_redirects=True,
+                headers=headers,
             )
             response.raise_for_status()
         except httpx.HTTPStatusError as exc:  # pragma: no cover - network failure
