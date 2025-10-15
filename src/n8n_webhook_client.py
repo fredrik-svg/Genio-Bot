@@ -5,8 +5,8 @@ import uuid
 
 import httpx
 
-from app_config import AppConfig
-from reply_broker import ReplyBroker
+from .app_config import AppConfig
+from .reply_broker import ReplyBroker
 
 
 class N8nWebhookClient:

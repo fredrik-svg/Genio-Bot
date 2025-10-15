@@ -7,8 +7,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import uvicorn
 
-from app_config import AppConfig
-from n8n_webhook_client import N8nWebhookClient
+from .app_config import AppConfig
+from .n8n_webhook_client import N8nWebhookClient
 
 
 class ReplyPayload(BaseModel):
