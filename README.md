@@ -96,4 +96,29 @@ Det går bra att köra programmet i en utvecklingsmiljö. Tänk på att mikrofon
 - **Timeout mot n8n:** verifiera att webhook-URL:en stämmer och att n8n-flödet skickar tillbaka svaret till appens webhook.
 - **Piper hittar inte modellen:** uppdatera `tts.model_path` och `tts.config_path` i `config.yaml`.
 
+### Diagnostisera n8n-anslutningen
+
+Behöver du felsöka kommunikationen mot n8n finns hjälpfunktionen `diagnose_connection` i `N8nWebhookClient`. Kör följande kommando i projektroten för att läsa in din konfiguration, kontakta servern och skicka ett minimalt testmeddelande:
+
+```bash
+python - <<'PY'
+from pathlib import Path
+from src.app_config import AppConfig
+from src.n8n_webhook_client import N8nWebhookClient
+from src.reply_broker import ReplyBroker
+
+config = AppConfig.load(Path("config.yaml"))
+client = N8nWebhookClient(config, ReplyBroker())
+result = client.diagnose_connection(device="diagnostic-cli")
+print(result)
+PY
+```
+
+Utdata innehåller två nycklar:
+
+- `server` – resultatet av en enkel `GET` mot bas-URL:en.
+- `webhook` – resultatet av ett `POST`-anrop mot fråge-webhooken.
+
+Båda sektionerna anger om anropet lyckades (`ok`) samt statuskod, slutgiltig URL och eventuell feltext. Använd informationen för att hitta felaktiga sökvägar, brandväggar eller andra konfigurationsproblem.
+
 Lycka till med din nya Genio Bot-installation! 🎉
