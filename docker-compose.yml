@@ -8,10 +8,10 @@ services:
       - "/dev/snd:/dev/snd"
     volumes:
       - ./:/app
-      - whisper-models:/root/.cache/huggingface  # Cache for Whisper models
+      - whisper-models:/root/.cache/huggingface  # Cache for Whisper modeller
     environment:
       - PYTHONUNBUFFERED=1
-    command: ["python", "src/main.py", "--config", "config.docker.yaml"]
+    command: ["python", "-m", "src.app", "--config", "config.docker.yaml"]
     restart: unless-stopped
 
 volumes:

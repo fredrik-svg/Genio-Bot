@@ -5,4 +5,4 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install -U pip wheel && pip install -r requirements.txt
 COPY . .
-CMD ["python", "src/main.py", "--config", "config.yaml"]
+CMD ["python", "-m", "src.app", "--config", "config.yaml"]

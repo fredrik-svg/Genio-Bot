@@ -1,36 +1,28 @@
-# Mikrofon/Högtalare
-audio:
-  input_device: null          # index eller null för default
-  sample_rate: 16000
-  channels: 1
-  chunk_ms: 30
-  vad:
-    enabled: true
-    aggressiveness: 2         # 0–3
+# Dockeranpassad konfiguration för Genio Bot.
 
-# STT (Speech-to-Text)
+n8n:
+  server_url: "https://ai.genio-bot.com"
+  text_webhook_path: "/webhook/genio-bot-question"
+  response_webhook_path: "/webhook/genio-bot-response"
+
+app:
+  public_base_url: "https://ai.genio-bot.com"
+  reply_webhook_path: "/api/v1/webhooks/genio-bot-reply"
+  listen_host: "0.0.0.0"
+  listen_port: 8010
+  reply_timeout_s: 60
+
 stt:
-  mode: local                 # "local" för lokal Whisper-transkribering, "upload" för att skicka ljud till n8n
-  language: sv
-  piper:
-    model: base               # tiny, base, small, medium, large (större = bättre kvalitet men långsammare)
-    device: cpu               # cpu eller cuda
+  model_size: "small"
+  language: "sv"
+  device: "cpu"
+  compute_type: "int8"
 
-# TTS (lokalt Piper)
 tts:
-  piper:
-    model_path: models/piper/sv-SE_piper.onnx
-    config_path: models/piper/sv-SE_piper.onnx.json
-    output_wav: /tmp/tts_out.wav
-    playback_cmd: ["aplay", "-q", "/tmp/tts_out.wav"]
-
-# Central endpoint (n8n webhook)
-backend:
-  n8n_url: "https://ai.genio-bot.com/webhook/text-input"     # för textfrågor
-  audio_url: "https://ai.genio-bot.com/webhook/audio-input"  # för ljuduppladdning (om mode: upload)
-  response_key: reply
-  timeout_s: 30
-  headers: {}
-
-logging:
-  level: INFO
+  model_path: "/app/piper/models/sv-se_nst-medium.onnx"
+  config_path: "/app/piper/models/sv-se_nst-medium.onnx.json"
+  output_wav: "/tmp/genio-bot-tts.wav"
+  playback_cmd:
+    - "aplay"
+    - "-q"
+    - "/tmp/genio-bot-tts.wav"
