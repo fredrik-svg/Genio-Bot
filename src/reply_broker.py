@@ -45,3 +45,10 @@ class ReplyBroker:
             return False
         pending.set(reply)
         return True
+
+    def discard(self, conversation_id: str) -> bool:
+        """Remove a pending conversation without delivering a reply."""
+
+        with self._lock:
+            pending = self._pending.pop(conversation_id, None)
+        return pending is not None
