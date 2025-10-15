@@ -57,6 +57,7 @@ class WebhookNotification(BaseModel):
 class VerifyRequest(BaseModel):
     url: str
     webhook_path: Optional[str] = "/webhook/text-input"
+    api_key: Optional[str] = ""
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -115,12 +116,17 @@ async def verify_connectivity(verify: VerifyRequest):
     """Verify connectivity to n8n server."""
     try:
         full_url = verify.url.rstrip("/") + verify.webhook_path
+        # Prepare headers with optional API key
+        headers = {}
+        if verify.api_key:
+            headers["Authorization"] = f"Bearer {verify.api_key}"
+        
         async with httpx.AsyncClient(timeout=10.0) as client:
             # Try a HEAD request first, then GET if HEAD is not supported
             try:
-                response = await client.head(full_url)
+                response = await client.head(full_url, headers=headers)
             except httpx.HTTPStatusError:
-                response = await client.get(full_url)
+                response = await client.get(full_url, headers=headers)
             
             # Consider 404, 405 (Method Not Allowed), and 2xx as success
             # 404 means the server is reachable but webhook might not be configured yet
@@ -188,8 +194,13 @@ async def verify_webhook(verify: VerifyRequest):
             "text": "test"
         }
         
+        # Prepare headers with optional API key
+        headers = {}
+        if verify.api_key:
+            headers["Authorization"] = f"Bearer {verify.api_key}"
+        
         async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.post(full_url, json=test_payload)
+            response = await client.post(full_url, json=test_payload, headers=headers)
             
             if response.status_code == 200:
                 try:

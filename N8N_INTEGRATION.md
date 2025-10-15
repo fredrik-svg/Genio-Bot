@@ -211,7 +211,8 @@ Test connection to n8n server.
 ```json
 {
   "url": "https://ai.genio-bot.com",
-  "webhook_path": "/webhook/text-input"
+  "webhook_path": "/webhook/text-input",
+  "api_key": "optional-api-key"
 }
 ```
 
@@ -225,6 +226,8 @@ Test connection to n8n server.
 }
 ```
 
+**Note**: If your n8n server requires authentication, include the `api_key` field. The API key will be sent as `Authorization: Bearer {api_key}` header.
+
 #### POST /api/verify-webhook
 Test webhook functionality with a real request.
 
@@ -232,7 +235,8 @@ Test webhook functionality with a real request.
 ```json
 {
   "url": "https://ai.genio-bot.com",
-  "webhook_path": "/webhook/text-input"
+  "webhook_path": "/webhook/text-input",
+  "api_key": "optional-api-key"
 }
 ```
 
@@ -244,6 +248,8 @@ Test webhook functionality with a real request.
   "response": {"reply": "test response"}
 }
 ```
+
+**Note**: If your n8n server requires authentication, include the `api_key` field. The API key will be sent as `Authorization: Bearer {api_key}` header.
 
 #### POST /api/verify-apikey
 Verify OpenAI API key validity.
