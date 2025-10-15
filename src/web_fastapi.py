@@ -59,6 +59,35 @@ class VerifyRequest(BaseModel):
     webhook_path: Optional[str] = "/webhook/text-input"
     api_key: Optional[str] = ""
 
+
+def _build_webhook_url(base_url: str, webhook_path: Optional[str]) -> str:
+    """Build a full webhook URL from the base URL and path.
+
+    The setup wizard allows users to either provide a base n8n URL together
+    with a relative webhook path (e.g. ``https://example.com`` +
+    ``/webhook/text-input``) or paste the full webhook URL directly. When the
+    full URL is provided we must avoid appending it to the base URL – otherwise
+    the request becomes ``https://example.com/webhook/text-input/webhook/text-input``
+    which results in the 404 that users have reported in the setup wizard.
+
+    This helper normalises the inputs so both scenarios work as expected.
+    """
+
+    if webhook_path:
+        webhook_path = webhook_path.strip()
+
+    if not webhook_path:
+        return base_url.rstrip("/")
+
+    lower_path = webhook_path.lower()
+    if lower_path.startswith("http://") or lower_path.startswith("https://"):
+        return webhook_path.rstrip("/")
+
+    base = base_url.rstrip("/")
+    if not webhook_path.startswith("/"):
+        webhook_path = f"/{webhook_path}"
+    return f"{base}{webhook_path}"
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     """Serve the main page or setup wizard based on configuration."""
@@ -115,7 +144,7 @@ async def save_setup(setup: SetupRequest):
 async def verify_connectivity(verify: VerifyRequest):
     """Verify connectivity to n8n server."""
     try:
-        full_url = verify.url.rstrip("/") + verify.webhook_path
+        full_url = _build_webhook_url(verify.url, verify.webhook_path)
         # Prepare headers with optional API key
         headers = {}
         if verify.api_key:
@@ -188,7 +217,7 @@ async def verify_connectivity(verify: VerifyRequest):
 async def verify_webhook(verify: VerifyRequest):
     """Verify webhook is properly configured by sending a test request."""
     try:
-        full_url = verify.url.rstrip("/") + verify.webhook_path
+        full_url = _build_webhook_url(verify.url, verify.webhook_path)
         test_payload = {
             "device": "setup-wizard",
             "text": "test"
