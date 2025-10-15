@@ -86,17 +86,40 @@ class N8nConfig:
         """
         return self.config.get(key, default)
     
+    @staticmethod
+    def _build_full_url(base: str, path: str) -> str:
+        base = (base or "").strip()
+        path = (path or "").strip()
+
+        if not base and not path:
+            return ""
+
+        lower_path = path.lower()
+        if lower_path.startswith("http://") or lower_path.startswith("https://"):
+            return path.rstrip("/")
+
+        if not base:
+            return path
+
+        base = base.rstrip("/")
+        if not path:
+            return base
+
+        if not path.startswith("/"):
+            path = f"/{path}"
+        return f"{base}{path}"
+
     def get_text_url(self) -> str:
         """Get full text webhook URL."""
-        base = self.config.get("n8n_url", "").rstrip("/")
+        base = self.config.get("n8n_url", "")
         path = self.config.get("text_webhook", "/webhook/text-input")
-        return f"{base}{path}" if base else ""
-    
+        return self._build_full_url(base, path)
+
     def get_audio_url(self) -> str:
         """Get full audio webhook URL."""
-        base = self.config.get("n8n_url", "").rstrip("/")
+        base = self.config.get("n8n_url", "")
         path = self.config.get("audio_webhook", "/webhook/audio-input")
-        return f"{base}{path}" if base else ""
+        return self._build_full_url(base, path)
     
     def is_configured(self) -> bool:
         """Check if basic configuration is complete."""
