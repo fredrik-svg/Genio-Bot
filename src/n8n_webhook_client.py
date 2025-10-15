@@ -28,6 +28,7 @@ class N8nWebhookClient:
             self.config.n8n.question_url(),
             json=payload,
             timeout=self.config.app.reply_timeout_s,
+            follow_redirects=True,
         )
         response.raise_for_status()
         reply = pending.wait(self.config.app.reply_timeout_s)
