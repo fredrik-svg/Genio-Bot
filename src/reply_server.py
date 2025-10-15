@@ -47,6 +47,8 @@ class ReplyWebhookServer:
             host=self.config.app.listen_host,
             port=self.config.app.listen_port,
             log_level="info",
+            proxy_headers=True,
+            forwarded_allow_ips="*",
         )
         server = uvicorn.Server(config)
         self._uvicorn = server
