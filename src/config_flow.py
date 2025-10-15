@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Callable
 
-from app_config import AppConfig
+from .app_config import AppConfig
 
 
 class ConfigurationFlow:

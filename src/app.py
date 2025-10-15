@@ -5,14 +5,14 @@ import argparse
 import os
 from pathlib import Path
 
-from app_config import AppConfig
-from audio_recorder import AudioRecorder
-from config_flow import ConfigurationFlow
-from n8n_webhook_client import N8nWebhookClient
-from reply_broker import ReplyBroker
-from reply_server import ReplyWebhookServer
-from speech_to_text import SpeechToText
-from text_to_speech import PiperTextToSpeech
+from .app_config import AppConfig
+from .audio_recorder import AudioRecorder
+from .config_flow import ConfigurationFlow
+from .n8n_webhook_client import N8nWebhookClient
+from .reply_broker import ReplyBroker
+from .reply_server import ReplyWebhookServer
+from .speech_to_text import SpeechToText
+from .text_to_speech import PiperTextToSpeech
 
 
 def build_components(config: AppConfig):
