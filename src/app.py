@@ -38,11 +38,17 @@ def build_components(config: AppConfig):
 def main() -> None:
     parser = argparse.ArgumentParser(description="Genio Bot röstassistent")
     parser.add_argument("--config", default="config.yaml", help="Sökväg till konfigurationsfilen")
+    parser.add_argument("--configure", action="store_true", help="Kör konfigurationsguiden")
     args = parser.parse_args()
 
     config_path = Path(args.config)
-    flow = ConfigurationFlow(config_path)
-    config = flow.run()
+    
+    # Only run configuration wizard if config doesn't exist or --configure flag is set
+    if args.configure or not config_path.exists():
+        flow = ConfigurationFlow(config_path)
+        config = flow.run()
+    else:
+        config = AppConfig.load(config_path)
 
     recorder, stt, tts, client, webhook_server = build_components(config)
     webhook_server.start()
