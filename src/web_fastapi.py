@@ -6,6 +6,7 @@ import os
 import logging
 import argparse
 from typing import Optional
+from urllib.parse import urlparse
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -88,14 +89,31 @@ def _build_webhook_url(base_url: str, webhook_path: Optional[str]) -> str:
     # Normalise the path so comparisons are consistent regardless of leading slash
     normalised_path = webhook_path.lstrip("/")
 
+    parsed_base = urlparse(base)
+    base_path = parsed_base.path.rstrip("/") if parsed_base.path else ""
+
+    if base_path:
+        base_segments = [segment for segment in base_path.split("/") if segment]
+
+        # If the base URL already points to a specific webhook (e.g. /webhook/text)
+        # we assume the user pasted the complete webhook URL in the n8n field and
+        # avoid appending the default webhook path again. This prevents generating
+        # URLs like https://example.com/webhook/text/webhook/text-input.
+        if len(base_segments) >= 2 and base_segments[0].lower() == "webhook":
+            return base
+
     # If the base URL already ends with the webhook path we assume the user has
     # provided the full URL in the n8n field and avoid appending the path again.
     if base.lower().endswith(normalised_path.lower()):
         return base
 
-    if not webhook_path.startswith("/"):
-        webhook_path = f"/{webhook_path}"
-    return f"{base}{webhook_path}" if base else webhook_path
+    if webhook_path.startswith("/"):
+        if parsed_base.scheme and parsed_base.netloc:
+            return f"{parsed_base.scheme}://{parsed_base.netloc}{webhook_path}"
+        return webhook_path
+
+    base_prefix = base if base.endswith("/") else f"{base}/" if base else ""
+    return f"{base_prefix}{webhook_path}" if base_prefix else webhook_path
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):

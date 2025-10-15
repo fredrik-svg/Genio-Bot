@@ -69,6 +69,20 @@ class BuildWebhookUrlTests(unittest.TestCase):
             "https://example.com",
         )
 
+    def test_detects_full_webhook_even_with_different_default_path(self):
+        self.assertEqual(
+            _build_webhook_url(
+                "https://example.com/webhook/custom-text", "/webhook/text-input"
+            ),
+            "https://example.com/webhook/custom-text",
+        )
+
+    def test_allows_appending_when_base_is_webhook_root(self):
+        self.assertEqual(
+            _build_webhook_url("https://example.com/webhook", "/webhook/text-input"),
+            "https://example.com/webhook/text-input",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
