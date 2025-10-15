@@ -76,17 +76,26 @@ def _build_webhook_url(base_url: str, webhook_path: Optional[str]) -> str:
     if webhook_path:
         webhook_path = webhook_path.strip()
 
+    base = base_url.rstrip("/")
+
     if not webhook_path:
-        return base_url.rstrip("/")
+        return base
 
     lower_path = webhook_path.lower()
     if lower_path.startswith("http://") or lower_path.startswith("https://"):
         return webhook_path.rstrip("/")
 
-    base = base_url.rstrip("/")
+    # Normalise the path so comparisons are consistent regardless of leading slash
+    normalised_path = webhook_path.lstrip("/")
+
+    # If the base URL already ends with the webhook path we assume the user has
+    # provided the full URL in the n8n field and avoid appending the path again.
+    if base.lower().endswith(normalised_path.lower()):
+        return base
+
     if not webhook_path.startswith("/"):
         webhook_path = f"/{webhook_path}"
-    return f"{base}{webhook_path}"
+    return f"{base}{webhook_path}" if base else webhook_path
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
