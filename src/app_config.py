@@ -23,7 +23,7 @@ class N8nSettings:
     """Settings for talking to the n8n server."""
 
     server_url: str = "https://ai.genio-bot.com"
-    text_webhook_path: str = "/webhook/genio-bot-question"
+    text_webhook_path: str = "/webhook/text-input"
     response_webhook_path: str = "/webhook/genio-bot-response"
 
     def question_url(self) -> str:

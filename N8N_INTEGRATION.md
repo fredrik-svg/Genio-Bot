@@ -24,7 +24,7 @@ Utgå från informationen som visas i applikationens konfigurationsflöde (steg 
 | Inställning | Värde |
 |-------------|-------|
 | Metod | `POST` |
-| URL | `<n8n-server>/<text_webhook_path>` (ex. `https://ai.genio-bot.com/webhook/genio-bot-question`) |
+| URL | `<n8n-server>/<text_webhook_path>` (ex. `https://ai.genio-bot.com/webhook/text-input`) |
 | Förväntad body | ```json
 { "text": "Hej!", "conversation_id": "<uuid>", "callback_url": "https://ai.genio-bot.com/api/v1/webhooks/genio-bot-reply" }
 ``` |
